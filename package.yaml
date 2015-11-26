@@ -1,0 +1,49 @@
+name: futuhours-api
+version: 0.1.0.0
+synopsis: Futuhours API
+description: New and fancy
+author: Oleg Grenrus <oleg.grenrus@iki.fi>
+maintainer: Oleg Grenrus <oleg.grenrus@iki.fi>
+license: BSD3
+github: futurice/futuhours-api
+category: Web
+tested-with: GHC==7.8.4, GHC==7.10.2
+extra-source-files:
+- README.md
+
+ghc-options: -Wall
+
+library:
+  source-dirs: src
+  dependencies:
+    - base                  >=4.7   && <4.9
+    - aeson                 >=0.8   && <0.10
+    - aeson-extra           >=0.2.2 && <0.3
+    - base-compat
+    - blaze-html
+    - futulogo
+    - lens
+    - markdown
+    - semigroups
+    - servant
+    - servant-blaze
+    - servant-cache
+    - servant-docs
+    - servant-server
+    - servant-status
+    - stm
+    - text
+    - transformers
+    - unordered-containers
+    - vector
+    - wai
+    - warp
+
+executables:
+  futuhours-api-server:
+    ghc-options: -threaded
+    main: Main.hs
+    source-dirs: srv
+    dependencies:
+      - base
+      - futuhours-api

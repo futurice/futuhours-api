@@ -1,0 +1,26 @@
+resolver: lts-2.22
+packages:
+- .
+- location:
+    git: https://github.com/futurice/haskell-futulogo.git
+    commit: d05e792c98418da5d24d735dc43d21016c227e9b
+- location:
+    git: https://github.com/futurice/haskell-servant-cache.git
+    commit: de5b65c43acb20be2e23ae5fd84b07f9925231ee
+- location:
+    git:  https://github.com/futurice/haskell-servant-status.git
+    commit: 5a4c42728fda8fbee135b29cd5d51529260d7d5e
+- location:
+    git: https://github.com/phadej/JuicyPixels-util.git
+    commit: e810933bd7d35773fa8ec9957094493cf430b8ad
+extra-deps:
+- aeson-extra-0.2.2.0
+- servant-0.4.4.5
+- servant-blaze-0.4.4.5
+- servant-docs-0.4.4.5
+- servant-JuicyPixels-0.3.0.0
+- servant-lucid-0.4.4.5
+- servant-server-0.4.4.5
+- servant-yaml-0.1.0.0
+- strict-base-types-0.4.0
+flags: {}
