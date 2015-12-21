@@ -15,6 +15,7 @@ import Data.Aeson.Extra       (SymTag (..))
 import Network.Wai
 import Servant
 import Servant.Cache.Class    (DynMapCache)
+import System.IO              (hPutStrLn, stderr)
 
 import qualified Data.Vector                   as V
 import qualified Network.Wai.Handler.Warp      as Warp
@@ -54,7 +55,9 @@ app cache ctx = serve futuhoursAPI' (server' cache ctx)
 
 defaultMain :: IO ()
 defaultMain = do
+    hPutStrLn stderr "Hello, I'm futuhours-api server"
     Config{..} <- getConfig
     cache <- DynMap.newIO
     let app' = app cache ()
+    hPutStrLn stderr "Now I'll start the webservice"
     Warp.run cfgPort app'
