@@ -8,22 +8,35 @@ module FutuHours.Config (
 import Prelude        ()
 import Prelude.Compat
 
-import qualified Data.Text          as T
-import           System.Environment (lookupEnv)
-import           Text.Read          (readMaybe)
+import Data.ByteString    (ByteString)
+import Data.String        (fromString)
+import Data.Word          (Word64)
+import System.Environment (lookupEnv)
+import Text.Read          (readMaybe)
+
+import qualified Data.Text                 as T
+import qualified PlanMill.Types.Auth       as PM
+import qualified PlanMill.Types.Identifier as PM
+import qualified PlanMill.Types.User       as PM
 
 -- | TODO: split config into two parts
 data Config = Config
-    { cfgUnused :: !T.Text
-      -- ^ Flowdock organisation
-    , cfgPort   :: !Int
+    { cfgPlanmillUrl       :: !String
+      -- ^ Planmill url
+    , cfgPlanmillAdminUser :: !PM.UserId
+      -- ^ Admin user id
+    , cfgPlanmillSignature :: !PM.ApiKey
+      -- ^ Token
+    , cfgPort              :: !Int
       -- ^ Port to listen from, default is 'defaultPort'.
     }
     deriving (Show)
 
 getConfig :: IO Config
 getConfig =
-    Config <$> parseEnvVar "UNUSED"
+    Config <$> parseEnvVar "PLANMILL_BASEURL"
+           <*> parseEnvVar "PLANMILL_ADMIN"
+           <*> parseEnvVar "PLANMILL_SIGNATURE"
            <*> parseEnvVarWithDefault "PORT" defaultPort
 
 defaultPort :: Int
@@ -59,8 +72,20 @@ parseEnvVarWithDefault var def = do
 instance a ~ Char => FromEnvVar [a] where
     fromEnvVar = Just
 
+instance FromEnvVar ByteString where
+    fromEnvVar = Just . fromString
+
 instance FromEnvVar T.Text where
     fromEnvVar = Just . T.pack
+
+instance FromEnvVar PM.ApiKey where
+    fromEnvVar = fmap PM.ApiKey . fromEnvVar
+
+instance FromEnvVar (PM.Identifier a) where
+    fromEnvVar = fmap PM.Ident . fromEnvVar
+
+instance FromEnvVar Word64 where
+    fromEnvVar = readMaybe
 
 instance FromEnvVar Int where
     fromEnvVar = readMaybe

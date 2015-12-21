@@ -3,18 +3,25 @@ packages:
 - .
 - location:
     git: https://github.com/futurice/haskell-futulogo.git
-    commit: d05e792c98418da5d24d735dc43d21016c227e9b
+    commit: 05a3c7fe3f439e127107e1629f2f2cc0042a448c
 - location:
     git: https://github.com/futurice/haskell-servant-cache.git
-    commit: de5b65c43acb20be2e23ae5fd84b07f9925231ee
+    commit: 582e5d16f4b16908bcec9868e55210ddb1523a25
 - location:
     git:  https://github.com/futurice/haskell-servant-status.git
-    commit: 5a4c42728fda8fbee135b29cd5d51529260d7d5e
+    commit: 9c69f69c096ebc1331a3f1c61f1321065570ec09
 - location:
     git: https://github.com/phadej/JuicyPixels-util.git
     commit: e810933bd7d35773fa8ec9957094493cf430b8ad
+- location:
+    git: https://github.com/futurice/haskell-planmill-client.git
+    commit: c8ab8409bd296e161febe0649b072160f8519cc4
 extra-deps:
-- aeson-extra-0.2.2.0
+- aeson-extra-0.2.3.0
+- hashable-time-0.2
+- iso8601-time-0.1.4
+- monad-time-0.1
+- regex-applicative-text-0.1.0.0
 - servant-0.4.4.5
 - servant-blaze-0.4.4.5
 - servant-docs-0.4.4.5
@@ -23,4 +30,8 @@ extra-deps:
 - servant-server-0.4.4.5
 - servant-yaml-0.1.0.0
 - strict-base-types-0.4.0
-flags: {}
+flags:
+  hashable-time:
+    old-locale: true
+  iso8601-time:
+    new-time: false
