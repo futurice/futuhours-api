@@ -3,4 +3,4 @@ module Main (main) where
 import FutuHours
 
 main :: IO ()
-main = defaultMain
+main = putStrLn "foo" >> defaultMain

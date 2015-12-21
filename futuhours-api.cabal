@@ -34,9 +34,11 @@ library
     , aeson-extra           >=0.2.2 && <0.3
     , base-compat
     , blaze-html
+    , bytestring
     , futulogo
     , lens
     , markdown
+    , planmill-client
     , semigroups
     , servant
     , servant-blaze
@@ -55,6 +57,7 @@ library
       FutuHours
       FutuHours.API
       FutuHours.Config
+      FutuHours.Endpoints
       FutuHours.Types
       Orphans
   default-language: Haskell2010
