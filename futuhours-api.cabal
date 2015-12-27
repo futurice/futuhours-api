@@ -36,6 +36,7 @@ library
     , blaze-html
     , bytestring
     , futulogo
+    , hashable
     , lens
     , markdown
     , planmill-client
