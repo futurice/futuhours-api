@@ -15,10 +15,15 @@ packages:
     commit: e810933bd7d35773fa8ec9957094493cf430b8ad
 - location:
     git: https://github.com/futurice/haskell-planmill-client.git
-    commit: c8ab8409bd296e161febe0649b072160f8519cc4
+    commit: d873a2bf52d84e06f683d968fa4ee8d724a130f5
 extra-deps:
+- ansi-pretty-0.1.1.0
+- binary-orphans-0.1.3.0
+- binary-tagged-0.1.3.0
+- composition-extra-2.0.0
 - hashable-time-0.2
 - iso8601-time-0.1.4
+- monad-http-0.1.0.0
 - monad-time-0.1
 - monadcryptorandom-0.7.0
 - regex-applicative-text-0.1.0.0
