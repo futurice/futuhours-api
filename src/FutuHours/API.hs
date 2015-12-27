@@ -41,7 +41,7 @@ type FutuHoursAPI =
     :<|> "hours" :> "new"    :> ReqBody '[JSON] TimeReport :> Post '[JSON] TimeReport
     :<|> "hours" :> "modify" :> ReqBody '[JSON] TimeReport :> Post '[JSON] TimeReport
     :<|> "holidays" :> Get '[JSON] (Vector Holiday)
-    :<|> "projects" :> Get '[JSON] (Vector Project)
+    :<|> "projects" :> Capture "userid" UserId :> Get '[JSON] (Vector Project)
     :<|> "tasks"    :> Get '[JSON] (Vector Task)
     -- TODO: absenses
 

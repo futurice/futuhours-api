@@ -11,7 +11,6 @@ module FutuHours (defaultMain) where
 import Prelude        ()
 import Prelude.Compat
 
-import Control.Monad.IO.Class (liftIO)
 import Data.Aeson.Extra       (SymTag (..))
 import Network.Wai
 import Servant
@@ -38,7 +37,7 @@ server ctx = pure "Hello to futuhours api"
     :<|> newTimeReport
     :<|> modifyTimeReport
     :<|> pure (V.singleton SymTag)
-    :<|> liftIO (getProjects ctx)
+    :<|> getProjects ctx
     :<|> pure (V.singleton SymTag)
   where
     newTimeReport _ = pure SymTag
