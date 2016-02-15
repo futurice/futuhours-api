@@ -1,34 +1,36 @@
-resolver: lts-3.18
+resolver: lts-3.22
 packages:
-- .
+- '.'
 - location:
     git: https://github.com/futurice/haskell-futulogo.git
-    commit: 05a3c7fe3f439e127107e1629f2f2cc0042a448c
-- location:
-    git: https://github.com/futurice/haskell-servant-cache.git
-    commit: 582e5d16f4b16908bcec9868e55210ddb1523a25
-- location:
-    git:  https://github.com/futurice/haskell-servant-status.git
-    commit: 9c69f69c096ebc1331a3f1c61f1321065570ec09
-- location:
-    git: https://github.com/phadej/JuicyPixels-util.git
-    commit: e810933bd7d35773fa8ec9957094493cf430b8ad
+    commit: 5c5b57fc5927d5e84fb1c1e42ace701d0b938d66
 - location:
     git: https://github.com/futurice/haskell-planmill-client.git
-    commit: d873a2bf52d84e06f683d968fa4ee8d724a130f5
+    commit: 874a8b0085bb5639f43a28094ea7b4bd1ea7fc93
+- location:
+    git: https://github.com/futurice/haskell-servant-cache.git
+    commit: 3384dca89849b066fa264695e687761d525ef0d3
+- location:
+    git: https://github.com/futurice/haskell-servant-status.git
+    commit: 655edd38563d3923a83c048cc5c894c1ab9b33d7
 extra-deps:
 - ansi-pretty-0.1.1.0
-- binary-orphans-0.1.3.0
-- binary-tagged-0.1.3.0
+- binary-orphans-0.1.4.0
+- binary-tagged-0.1.3.1
 - composition-extra-2.0.0
 - hashable-time-0.2
 - iso8601-time-0.1.4
+- JuicyPixels-3.2.7
 - monad-http-0.1.0.0
 - monad-time-0.1
 - monadcryptorandom-0.7.0
-- regex-applicative-text-0.1.0.0
-- servant-blaze-0.4.4.5
+- regex-applicative-text-0.1.0.1
+- servant-blaze-0.4.4.6
 - servant-JuicyPixels-0.3.0.0
-- servant-lucid-0.4.4.5
-- strict-base-types-0.4.0
-flags: {}
+- servant-lucid-0.4.4.6
+- strict-base-types-0.5.0
+flags:
+  planmill-client:
+    aeson-compat: false
+  servant-status:
+    aeson-compat: false
