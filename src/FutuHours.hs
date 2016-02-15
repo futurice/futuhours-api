@@ -11,11 +11,12 @@ module FutuHours (defaultMain) where
 import Prelude        ()
 import Prelude.Compat
 
-import Data.Aeson.Extra       (SymTag (..))
+import Data.Aeson.Extra    (SymTag (..))
 import Network.Wai
 import Servant
-import Servant.Cache.Class    (DynMapCache)
-import System.IO              (hPutStrLn, stderr)
+import Servant.Cache.Class (DynMapCache)
+import Servant.Futurice
+import System.IO           (hPutStrLn, stderr)
 
 import qualified Data.Vector                   as V
 import qualified Network.Wai.Handler.Warp      as Warp
@@ -45,7 +46,7 @@ server ctx = pure "Hello to futuhours api"
 
 -- | Server with docs and cache and status
 server' :: DynMapCache -> Context -> Server FutuHoursAPI'
-server' cache ctx = serverWithDocs cache futuhoursAPI futuhoursExtraDocs (server ctx)
+server' cache ctx = futuriceApiServer cache futuhoursAPI futuhoursExtraDocs (server ctx)
 
 -- | Wai application
 app :: DynMapCache -> Context -> Application

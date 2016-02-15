@@ -34,7 +34,10 @@ library:
     - servant-docs
     - servant-server
     - servant-status
+    - servant-swagger
+    - servant-swagger-ui
     - stm
+    - swagger2
     - text
     - transformers
     - unordered-containers
