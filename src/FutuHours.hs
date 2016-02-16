@@ -11,16 +11,14 @@ module FutuHours (defaultMain) where
 import Prelude        ()
 import Prelude.Compat
 
-import Data.Aeson.Extra    (SymTag (..))
+import Data.Pool           (createPool)
 import Network.Wai
 import Servant
 import Servant.Cache.Class (DynMapCache)
 import Servant.Futurice
 import System.IO           (hPutStrLn, stderr)
-import Data.Pool (createPool)
 
-import qualified Database.PostgreSQL.Simple as Postgres
-import qualified Data.Vector                   as V
+import qualified Database.PostgreSQL.Simple    as Postgres
 import qualified Network.Wai.Handler.Warp      as Warp
 import qualified PlanMill                      as PM (Cfg (..))
 import qualified Servant.Cache.Internal.DynMap as DynMap
@@ -35,16 +33,8 @@ import Orphans ()
 -- | API server
 server :: Context -> Server FutuHoursAPI
 server ctx = pure "Hello to futuhours api"
-    :<|> pure SymTag
-    :<|> pure (V.singleton SymTag)
-    :<|> newTimeReport
-    :<|> modifyTimeReport
-    :<|> pure (V.singleton SymTag)
+    :<|> addPlanmillApiKey ctx
     :<|> getProjects ctx
-    :<|> pure (V.singleton SymTag)
-  where
-    newTimeReport _ = pure SymTag
-    modifyTimeReport _ = pure SymTag
 
 -- | Server with docs and cache and status
 server' :: DynMapCache -> Context -> Server FutuHoursAPI'

@@ -1,18 +1,20 @@
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 
 -- | API endpoints
 module FutuHours.Endpoints (
     Context(..),
+    addPlanmillApiKey,
     getProjects,
     ) where
 
 import Prelude        ()
 import Prelude.Compat
 
-import Control.Monad.IO.Class (MonadIO (..))
-import Data.List              (nub)
-import Database.PostgreSQL.Simple (Connection)
-import Data.Pool (Pool)
+import Control.Monad.IO.Class     (MonadIO (..))
+import Data.List                  (nub)
+import Data.Pool                  (Pool, withResource)
+import Database.PostgreSQL.Simple (Connection, execute)
 
 import qualified Data.Vector as V
 
@@ -32,6 +34,15 @@ data Context = Context
     { ctxPlanmillCfg  :: !PM.Cfg
     , ctxPostgresPool :: !(Pool Connection)
     }
+
+-- | Add planmill api key.
+addPlanmillApiKey :: MonadIO m => Context -> FUMUsername -> PlanmillApiKey -> m ()
+addPlanmillApiKey Context { ctxPostgresPool = pool } (FUMUsername username) (PlanmillApiKey apikey) =
+    liftIO $ withResource pool $ \conn -> do
+        rows <- execute conn "INSERT INTO futuhours.apikeys (fum_username, planmill_apikey) VALUES (?, ?)" (username, apikey)
+        print username
+        print apikey
+        print rows
 
 -- | Return projects for user
 --

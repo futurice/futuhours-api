@@ -14,7 +14,7 @@ import Data.Word          (Word64)
 import System.Environment (lookupEnv)
 import Text.Read          (readMaybe)
 
-import Database.PostgreSQL.Simple (ConnectInfo)
+import Database.PostgreSQL.Simple     (ConnectInfo)
 import Database.PostgreSQL.Simple.URL (parseDatabaseUrl)
 
 import qualified Data.Text                 as T
