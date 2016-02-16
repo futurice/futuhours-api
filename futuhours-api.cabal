@@ -35,13 +35,20 @@ library
     , base-compat
     , blaze-html
     , bytestring
+    , fum-client
     , futulogo
     , hashable
+    , http-client
+    , http-client-tls
     , lens
     , markdown
+    , monad-http
+    , monad-logger
+    , mtl
     , planmill-client
     , postgresql-simple
     , postgresql-simple-url
+    , regex-applicative-text
     , resource-pool
     , semigroups
     , servant
@@ -64,7 +71,9 @@ library
       FutuHours
       FutuHours.API
       FutuHours.Config
+      FutuHours.Context
       FutuHours.Endpoints
+      FutuHours.PlanMillUserIds
       FutuHours.Types
       Orphans
       Servant.Futurice

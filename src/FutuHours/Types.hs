@@ -10,6 +10,7 @@ module FutuHours.Types (
     UserId(..),
     FUMUsername(..),
     PlanmillApiKey(..),
+    PlanmillUserIdLookupTable,
     ) where
 
 import Prelude        ()
@@ -28,7 +29,9 @@ import Servant          (Capture, FromText (..))
 import Servant.Docs     (ToSample (..))
 import Servant.Docs     (DocCapture (..), ToCapture (..))
 
+import qualified Data.HashMap.Strict         as HM
 import qualified PlanMill.EndPoints.Projects as PM
+import qualified PlanMill.EndPoints.Users    as PM
 
 import Orphans ()
 
@@ -38,12 +41,16 @@ newtype UserId = UserId Int
 newtype FUMUsername = FUMUsername Text deriving (Eq, Show, Generic)
 newtype PlanmillApiKey = PlanmillApiKey Text deriving (Eq, Show, Generic)
 
+type PlanmillUserIdLookupTable = HM.HashMap FUMUsername PM.UserId
+
 instance ToParamSchema UserId
 instance ToParamSchema FUMUsername
 
 instance ToJSON PlanmillApiKey
 instance FromJSON PlanmillApiKey
 instance ToSchema PlanmillApiKey
+
+instance Hashable FUMUsername
 
 data Project = Project
     { projectId   :: !PM.ProjectId

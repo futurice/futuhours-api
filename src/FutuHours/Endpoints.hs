@@ -13,27 +13,21 @@ import Prelude.Compat
 
 import Control.Monad.IO.Class     (MonadIO (..))
 import Data.List                  (nub)
-import Data.Pool                  (Pool, withResource)
-import Database.PostgreSQL.Simple (Connection, execute)
+import Data.Pool                  (withResource)
+import Database.PostgreSQL.Simple (execute)
 
 import qualified Data.Vector as V
 
+import FutuHours.Context
 import FutuHours.Types
 
 -- Planmill modules
-import qualified PlanMill                       as PM (Cfg (..),
-                                                       Identifier (..),
+import qualified PlanMill                       as PM (Identifier (..),
                                                        PlanMill)
 import qualified PlanMill.EndPoints.Assignments as PM (ReportableAssignment (..),
                                                        ReportableAssignments,
                                                        reportableAssignments)
 import qualified PlanMill.Test                  as PM (evalPlanMillIO)
-
--- | We probably will have some
-data Context = Context
-    { ctxPlanmillCfg  :: !PM.Cfg
-    , ctxPostgresPool :: !(Pool Connection)
-    }
 
 -- | Add planmill api key.
 addPlanmillApiKey :: MonadIO m => Context -> FUMUsername -> PlanmillApiKey -> m ()

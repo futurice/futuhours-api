@@ -18,6 +18,7 @@ import Database.PostgreSQL.Simple     (ConnectInfo)
 import Database.PostgreSQL.Simple.URL (parseDatabaseUrl)
 
 import qualified Data.Text                 as T
+import qualified FUM
 import qualified PlanMill.Types.Auth       as PM
 import qualified PlanMill.Types.Identifier as PM
 import qualified PlanMill.Types.User       as PM
@@ -32,6 +33,9 @@ data Config = Config
       -- ^ Token
     , cfgPostgresConnInfo  :: !ConnectInfo
       -- ^ Postgres
+    , cfgFumToken          :: !FUM.AuthToken
+    , cfgFumBaseurl        :: !FUM.BaseUrl
+    , cfgFumList           :: !FUM.ListName
     , cfgPort              :: !Int
       -- ^ Port to listen from, default is 'defaultPort'.
     }
@@ -43,6 +47,9 @@ getConfig =
            <*> parseEnvVar "PLANMILL_ADMIN"
            <*> parseEnvVar "PLANMILL_SIGNATURE"
            <*> parseEnvVar "POSTGRES_URL"
+           <*> parseEnvVar "FUM_TOKEN"
+           <*> parseEnvVar "FUM_BASEURL"
+           <*> parseEnvVar "FUM_LISTNAME"
            <*> parseEnvVarWithDefault "PORT" defaultPort
 
 defaultPort :: Int
@@ -89,6 +96,15 @@ instance FromEnvVar PM.ApiKey where
 
 instance FromEnvVar (PM.Identifier a) where
     fromEnvVar = fmap PM.Ident . fromEnvVar
+
+instance FromEnvVar FUM.AuthToken where
+    fromEnvVar = fmap FUM.AuthToken . fromEnvVar
+
+instance FromEnvVar FUM.BaseUrl where
+    fromEnvVar = Just . FUM.BaseUrl
+
+instance FromEnvVar FUM.ListName where
+    fromEnvVar = Just . FUM.ListName
 
 instance FromEnvVar ConnectInfo where
     fromEnvVar = parseDatabaseUrl

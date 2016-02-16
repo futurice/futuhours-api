@@ -25,8 +25,9 @@ import qualified Servant.Cache.Internal.DynMap as DynMap
 
 -- FutuHours modules
 import FutuHours.API
-import FutuHours.Config    (Config (..), getConfig)
+import FutuHours.Config          (Config (..), getConfig)
 import FutuHours.Endpoints
+import FutuHours.PlanMillUserIds (planMillUserIds)
 
 import Orphans ()
 
@@ -54,7 +55,8 @@ defaultMain = do
             , PM.cfgBaseUrl = cfgPlanmillUrl
             }
     postgresPool <- createPool (Postgres.connect cfgPostgresConnInfo) Postgres.close 1 10 5
-    let ctx = Context pmCfg postgresPool
+    planmillUserLookup <- planMillUserIds pmCfg cfgFumToken cfgFumBaseurl cfgFumList
+    let ctx = Context pmCfg postgresPool planmillUserLookup
     cache <- DynMap.newIO
     let app' = app cache ctx
     hPutStrLn stderr "Now I'll start the webservice"

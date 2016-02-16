@@ -2,6 +2,10 @@ resolver: lts-2.22
 packages:
 - '.'
 - location:
+    git: https://github.com/futurice/haskell-fum-client.git
+    commit: 92da27db93ca9606cc30390534b8296b16e26723
+  extra-dep: true
+- location:
     git: https://github.com/futurice/haskell-futulogo.git
     commit: 5c5b57fc5927d5e84fb1c1e42ace701d0b938d66
   extra-dep: true
@@ -46,6 +50,8 @@ extra-deps:
 - strict-base-types-0.5.0
 - swagger2-2.0.1
 flags:
+  fum-client:
+    aeson-compat: false
   hashable-time:
     old-locale: true
   iso8601-time:
