@@ -27,6 +27,9 @@ library:
     - lens
     - markdown
     - planmill-client
+    - postgresql-simple
+    - postgresql-simple-url
+    - resource-pool
     - semigroups
     - servant
     - servant-blaze

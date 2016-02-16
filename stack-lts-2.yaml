@@ -33,6 +33,7 @@ extra-deps:
 - JuicyPixels-3.2.7
 - monad-http-0.1.0.0
 - monad-time-0.1
+- postgresql-simple-url-0.1.0.1
 - regex-applicative-text-0.1.0.1
 - servant-0.4.4.6
 - servant-blaze-0.4.4.6

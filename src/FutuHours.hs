@@ -17,7 +17,9 @@ import Servant
 import Servant.Cache.Class (DynMapCache)
 import Servant.Futurice
 import System.IO           (hPutStrLn, stderr)
+import Data.Pool (createPool)
 
+import qualified Database.PostgreSQL.Simple as Postgres
 import qualified Data.Vector                   as V
 import qualified Network.Wai.Handler.Warp      as Warp
 import qualified PlanMill                      as PM (Cfg (..))
@@ -56,11 +58,13 @@ defaultMain :: IO ()
 defaultMain = do
     hPutStrLn stderr "Hello, I'm futuhours-api server"
     Config{..} <- getConfig
-    let ctx = PM.Cfg
+    let pmCfg = PM.Cfg
             { PM.cfgUserId  = cfgPlanmillAdminUser
             , PM.cfgApiKey  = cfgPlanmillSignature
             , PM.cfgBaseUrl = cfgPlanmillUrl
             }
+    postgresPool <- createPool (Postgres.connect cfgPostgresConnInfo) Postgres.close 1 10 5
+    let ctx = Context pmCfg postgresPool
     cache <- DynMap.newIO
     let app' = app cache ctx
     hPutStrLn stderr "Now I'll start the webservice"

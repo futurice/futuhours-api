@@ -1,0 +1,4 @@
+create table futuhours.apikeys (
+  fum_username TEXT PRIMARY KEY,
+  planmill_apikey TEXT NOT NULL
+);

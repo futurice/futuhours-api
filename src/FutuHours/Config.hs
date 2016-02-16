@@ -14,6 +14,9 @@ import Data.Word          (Word64)
 import System.Environment (lookupEnv)
 import Text.Read          (readMaybe)
 
+import Database.PostgreSQL.Simple (ConnectInfo)
+import Database.PostgreSQL.Simple.URL (parseDatabaseUrl)
+
 import qualified Data.Text                 as T
 import qualified PlanMill.Types.Auth       as PM
 import qualified PlanMill.Types.Identifier as PM
@@ -27,6 +30,8 @@ data Config = Config
       -- ^ Admin user id
     , cfgPlanmillSignature :: !PM.ApiKey
       -- ^ Token
+    , cfgPostgresConnInfo  :: !ConnectInfo
+      -- ^ Postgres
     , cfgPort              :: !Int
       -- ^ Port to listen from, default is 'defaultPort'.
     }
@@ -37,6 +42,7 @@ getConfig =
     Config <$> parseEnvVar "PLANMILL_BASEURL"
            <*> parseEnvVar "PLANMILL_ADMIN"
            <*> parseEnvVar "PLANMILL_SIGNATURE"
+           <*> parseEnvVar "POSTGRES_URL"
            <*> parseEnvVarWithDefault "PORT" defaultPort
 
 defaultPort :: Int
@@ -83,6 +89,9 @@ instance FromEnvVar PM.ApiKey where
 
 instance FromEnvVar (PM.Identifier a) where
     fromEnvVar = fmap PM.Ident . fromEnvVar
+
+instance FromEnvVar ConnectInfo where
+    fromEnvVar = parseDatabaseUrl
 
 instance FromEnvVar Word64 where
     fromEnvVar = readMaybe
