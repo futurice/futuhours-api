@@ -4,15 +4,23 @@ packages:
 - location:
     git: https://github.com/futurice/haskell-futulogo.git
     commit: 5c5b57fc5927d5e84fb1c1e42ace701d0b938d66
+  extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-planmill-client.git
     commit: 874a8b0085bb5639f43a28094ea7b4bd1ea7fc93
+  extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-servant-cache.git
     commit: 3384dca89849b066fa264695e687761d525ef0d3
+  extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-servant-status.git
     commit: 655edd38563d3923a83c048cc5c894c1ab9b33d7
+  extra-dep: true
+- location:
+    git: https://github.com/phadej/servant-swagger-ui.git
+    commit: 0777fd36300a5110fd407a55c6a22bf4ec51f177
+  extra-dep: true
 extra-deps:
 - ansi-pretty-0.1.1.0
 - binary-orphans-0.1.4.0
@@ -28,7 +36,9 @@ extra-deps:
 - servant-blaze-0.4.4.6
 - servant-JuicyPixels-0.3.0.0
 - servant-lucid-0.4.4.6
+- servant-swagger-1.0.3
 - strict-base-types-0.5.0
+- swagger2-2.0.1
 flags:
   planmill-client:
     aeson-compat: false

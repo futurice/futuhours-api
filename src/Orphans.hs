@@ -14,12 +14,13 @@ import Prelude.Compat
 import Data.Aeson.Extra (SymTag (..))
 import Data.Proxy       (Proxy (..))
 import Data.Text        (Text)
-import FutuHours.Types  (Project (..), UserId (..))
 import PlanMill.Types   (Identifier (..))
-import Servant          (Capture, FromText (..))
-import Servant.Docs     (DocCapture (..), ToCapture (..), ToSample (..))
+import Servant.Docs     (ToSample (..))
 
 import qualified Data.Vector as V
+
+import Control.Lens
+import Data.Swagger
 
 instance ToSample Text Text where
     toSample _ = Nothing
@@ -30,15 +31,9 @@ instance ToSample a b => ToSample (V.Vector a) (V.Vector b) where
 instance ToSample (SymTag tag) (SymTag tag) where
     toSample _ = Just SymTag
 
--------------------------------------------------------------------------------
--- TODO: Move to FutuHours.Types when stable
--------------------------------------------------------------------------------
+instance ToSchema (Identifier a)
 
-instance ToSample Project Project where
-    toSample _ = Just $ Project (Ident 42) "Projekti"
-
-instance ToCapture (Capture "userid" UserId) where
-    toCapture _ = DocCapture "userid" "PlanMill userid"
-
-instance FromText UserId where
-    fromText = fmap UserId . fromText
+instance ToSchema (SymTag n) where
+    declareNamedSchema _ = pure $ NamedSchema (Just "Coord") s
+      where
+         s = mempty & type_ .~ SwaggerString

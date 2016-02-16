@@ -47,7 +47,10 @@ library
     , servant-docs
     , servant-server
     , servant-status
+    , servant-swagger
+    , servant-swagger-ui
     , stm
+    , swagger2
     , text
     , transformers
     , unordered-containers
@@ -61,6 +64,7 @@ library
       FutuHours.Endpoints
       FutuHours.Types
       Orphans
+      Servant.Futurice
   default-language: Haskell2010
 
 executable futuhours-api-server
