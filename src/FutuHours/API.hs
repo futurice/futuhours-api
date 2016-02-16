@@ -22,10 +22,11 @@ import FutuHours.Types
 import Orphans ()
 
 type LegacyFutuhoursAPI =
-    "projects" :> Capture "userid" UserId :> Get '[JSON] (Vector Project)
+    "timereports" :> Capture "fum-id" FUMUsername :> Get '[JSON] (Vector Timereport)
+    :<|> "projects" :> Capture "userid" UserId :> Get '[JSON] (Vector Project)
 
 type FutuHoursAPI = Get '[PlainText] Text
-    :<|> "add-planmill-token" :> Capture "userid" FUMUsername :> ReqBody '[JSON] PlanmillApiKey :> Put '[JSON] ()
+    :<|> "add-planmill-token" :> Capture "fum-id" FUMUsername :> ReqBody '[JSON] PlanmillApiKey :> Put '[JSON] ()
     :<|> "legacy" :> LegacyFutuhoursAPI
 
 {-

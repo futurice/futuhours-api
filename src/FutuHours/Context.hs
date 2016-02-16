@@ -10,5 +10,5 @@ import FutuHours.Types
 data Context = Context
     { ctxPlanmillCfg        :: !Cfg
     , ctxPostgresPool       :: !(Pool Connection)
-    , ctxPlanmillUserLookup :: !PlanmillUserIdLookupTable
+    , ctxPlanmillUserLookup :: !PlanmillUserIdLookupTable -- ^ *TODO:* refresh this from time to time
     }

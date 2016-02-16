@@ -22,6 +22,7 @@ library:
     - base-compat
     - blaze-html
     - bytestring
+    - either
     - fum-client
     - futulogo
     - hashable

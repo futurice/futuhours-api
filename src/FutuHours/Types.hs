@@ -11,6 +11,7 @@ module FutuHours.Types (
     FUMUsername(..),
     PlanmillApiKey(..),
     PlanmillUserIdLookupTable,
+    Timereport(..),
     ) where
 
 import Prelude        ()
@@ -29,9 +30,10 @@ import Servant          (Capture, FromText (..))
 import Servant.Docs     (ToSample (..))
 import Servant.Docs     (DocCapture (..), ToCapture (..))
 
-import qualified Data.HashMap.Strict         as HM
-import qualified PlanMill.EndPoints.Projects as PM
-import qualified PlanMill.EndPoints.Users    as PM
+import qualified Data.HashMap.Strict            as HM
+import qualified PlanMill.EndPoints.Projects    as PM
+import qualified PlanMill.EndPoints.Timereports as PM
+import qualified PlanMill.EndPoints.Users       as PM
 
 import Orphans ()
 
@@ -50,7 +52,21 @@ instance ToJSON PlanmillApiKey
 instance FromJSON PlanmillApiKey
 instance ToSchema PlanmillApiKey
 
+-- TODO: Postgres FromField / ToField for FUMUsername and PlanmillApiKey
+
 instance Hashable FUMUsername
+
+data Timereport = Timereport
+    { timereportId      :: !PM.TimereportId
+    , timereportComment :: !(Maybe Text)
+    }
+    deriving (Generic)
+
+instance ToSample Timereport Timereport where
+    toSample _ = Nothing
+
+instance ToJSON Timereport
+instance ToSchema Timereport
 
 data Project = Project
     { projectId   :: !PM.ProjectId
@@ -72,8 +88,8 @@ instance ToSample Project Project where
 instance ToCapture (Capture "userid" UserId) where
     toCapture _ = DocCapture "userid" "PlanMill userid"
 
-instance ToCapture (Capture "userid" FUMUsername) where
-    toCapture _ = DocCapture "userid" "FUM username"
+instance ToCapture (Capture "fum-id" FUMUsername) where
+    toCapture _ = DocCapture "fum-id" "FUM username"
 
 instance ToSample PlanmillApiKey PlanmillApiKey where
     toSample _ = Just $ PlanmillApiKey "deadbeef12345678"

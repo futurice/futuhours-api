@@ -35,6 +35,7 @@ import Orphans ()
 server :: Context -> Server FutuHoursAPI
 server ctx = pure "Hello to futuhours api"
     :<|> addPlanmillApiKey ctx
+    :<|> getTimereports ctx
     :<|> getProjects ctx
 
 -- | Server with docs and cache and status
