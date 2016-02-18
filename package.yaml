@@ -22,11 +22,22 @@ library:
     - base-compat
     - blaze-html
     - bytestring
+    - either
+    - fum-client
     - futulogo
     - hashable
+    - http-client
+    - http-client-tls
     - lens
     - markdown
+    - monad-http
+    - monad-logger
+    - mtl
     - planmill-client
+    - postgresql-simple
+    - postgresql-simple-url
+    - regex-applicative-text
+    - resource-pool
     - semigroups
     - servant
     - servant-blaze
