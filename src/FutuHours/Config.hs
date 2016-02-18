@@ -14,7 +14,7 @@ import Data.Word          (Word64)
 import System.Environment (lookupEnv)
 import Text.Read          (readMaybe)
 
-import Database.PostgreSQL.Simple     (ConnectInfo)
+import Database.PostgreSQL.Simple     (ConnectInfo(..))
 import Database.PostgreSQL.Simple.URL (parseDatabaseUrl)
 
 import qualified Data.Text                 as T
@@ -46,11 +46,18 @@ getConfig =
     Config <$> parseEnvVar "PLANMILL_BASEURL"
            <*> parseEnvVar "PLANMILL_ADMIN"
            <*> parseEnvVar "PLANMILL_SIGNATURE"
-           <*> parseEnvVar "POSTGRES_URL"
+           <*> getConnectInfo
            <*> parseEnvVar "FUM_TOKEN"
            <*> parseEnvVar "FUM_BASEURL"
            <*> parseEnvVar "FUM_LISTNAME"
            <*> parseEnvVarWithDefault "PORT" defaultPort
+
+getConnectInfo :: IO ConnectInfo
+getConnectInfo = f
+    <$> parseEnvVar "POSTGRES_URL"
+    <*> parseEnvVar "POSTGRES_PASS"
+  where
+    f connInfo pass = connInfo { connectPassword = pass }
 
 defaultPort :: Int
 defaultPort = 8000
