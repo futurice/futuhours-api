@@ -1,6 +1,8 @@
 {-# LANGUAGE CPP               #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PolyKinds         #-}
 {-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE TypeOperators     #-}
 
 -- | API endpoints
 module FutuHours.Endpoints (
@@ -13,13 +15,17 @@ module FutuHours.Endpoints (
 import Prelude        ()
 import Prelude.Compat
 
-import Control.Lens ((^.))
 #if MIN_VERSION_mtl(2,2,0)
 import Control.Monad.Except (throwError)
 #else
 import Control.Monad.Error (throwError)
 #endif
+
+import Control.Lens               ((^.))
+import Control.Monad.Http         (HttpT, evalHttpT)
 import Control.Monad.IO.Class     (MonadIO (..))
+import Control.Monad.Logger       (LoggingT, runStderrLoggingT)
+import Control.Monad.Reader       (ReaderT (..))
 import Control.Monad.Trans.Either (EitherT)
 import Data.List                  (nub)
 import Data.Pool                  (withResource)
@@ -36,6 +42,7 @@ import FutuHours.Context
 import FutuHours.Types
 
 -- Planmill modules
+import           Control.Monad.PlanMill         (MonadPlanMill (..))
 import qualified PlanMill                       as PM (ApiKey (..), Cfg (..),
                                                        Identifier (..),
                                                        PlanMill, identifier)
@@ -43,7 +50,8 @@ import qualified PlanMill.EndPoints.Assignments as PM (ReportableAssignment (..)
                                                        ReportableAssignments,
                                                        reportableAssignments)
 import qualified PlanMill.EndPoints.Timereports as PM (Timereport (..),
-                                                       timereports)
+                                                       Timereports, timereports)
+import qualified PlanMill.Operational           as PM (PlanMillT, runPlanMillT)
 import qualified PlanMill.Test                  as PM (evalPlanMillIO)
 
 -- | Add planmill api key.
@@ -68,10 +76,12 @@ getPlanmillApiKey' ctx username = (fmap . fmap) f (getPlanmillApiKey ctx usernam
   where f (PlanmillApiKey apiKey) = PM.ApiKey (TE.encodeUtf8 apiKey)
 
 getTimereports :: Context  -> FUMUsername -> EitherT ServantErr IO (V.Vector Timereport)
-getTimereports = withPlanmillCfg $ \cfg -> do
-    timereports <- PM.evalPlanMillIO cfg PM.timereports
-    return $ fmap convert timereports
+getTimereports = withPlanmillCfg $ \cfg -> liftIO $ runPlanmillT cfg getTimereports'
   where
+    getTimereports' :: (MonadPlanMill m, MonadPlanMillC m PM.Timereports) => m (V.Vector Timereport)
+    getTimereports' = do
+        timereports <- planmillAction PM.timereports
+        return $ fmap convert timereports
     convert :: PM.Timereport -> Timereport
     convert tr = Timereport (tr ^. PM.identifier) (PM.trComment tr)
 
@@ -82,6 +92,14 @@ withPlanmillCfg action ctx username =do
     let cfg = (ctxPlanmillCfg ctx) { PM.cfgUserId = planMillId, PM.cfgApiKey = apiKey }
     liftIO $ action cfg
 
+-- TODO: move to prelude
+infixr 0 :$
+type (:$) (f :: k -> l) (x :: k) = f x
+
+type Stack = ReaderT PM.Cfg :$ LoggingT :$ HttpT IO
+
+runPlanmillT :: PM.Cfg -> PM.PlanMillT Stack a -> IO a
+runPlanmillT cfg pm  = evalHttpT $ runStderrLoggingT $ flip runReaderT cfg $ PM.runPlanMillT pm
 
 -- | Return projects for user
 --

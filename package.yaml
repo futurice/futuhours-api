@@ -23,6 +23,7 @@ library:
     - blaze-html
     - bytestring
     - either
+    - exceptions
     - fum-client
     - futulogo
     - hashable
@@ -33,6 +34,7 @@ library:
     - monad-http
     - monad-logger
     - mtl
+    - operational
     - planmill-client
     - postgresql-simple
     - postgresql-simple-url
