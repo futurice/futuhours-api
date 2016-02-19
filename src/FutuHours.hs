@@ -8,8 +8,8 @@
 {-# LANGUAGE TypeOperators         #-}
 module FutuHours (defaultMain) where
 
-import Prelude        ()
-import Prelude.Compat
+import Futurice.Prelude
+import Prelude          ()
 
 import Data.Pool           (createPool)
 import Network.Wai

@@ -35,6 +35,8 @@ library
     , base-compat
     , blaze-html
     , bytestring
+    , containers
+    , deepseq
     , either
     , exceptions
     , fum-client
@@ -64,6 +66,7 @@ library
     , servant-swagger-ui
     , stm
     , swagger2
+    , tagged
     , text
     , transformers
     , unordered-containers
@@ -78,6 +81,7 @@ library
       FutuHours.Endpoints
       FutuHours.PlanMillUserIds
       FutuHours.Types
+      Futurice.Prelude
       Orphans
       Servant.Futurice
   default-language: Haskell2010

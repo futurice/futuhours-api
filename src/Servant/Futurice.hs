@@ -10,12 +10,11 @@ module Servant.Futurice (
     DocsAPI,
     ) where
 
-import Prelude        ()
-import Prelude.Compat
+import Futurice.Prelude
+import Prelude          ()
 
 import Control.Concurrent.STM   (atomically)
 import Control.Lens
-import Data.Semigroup           ((<>))
 import Data.Swagger
 import Futurice.Colour          (SColour)
 import Servant

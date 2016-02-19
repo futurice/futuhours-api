@@ -2,8 +2,8 @@
 -- | *TODO:* extract into common library
 module FutuHours.PlanMillUserIds (planMillUserIds) where
 
-import Prelude        ()
-import Prelude.Compat
+import Futurice.Prelude
+import Prelude          ()
 
 import Control.Applicative         (many)
 import Control.Lens                ((^.))
@@ -11,7 +11,6 @@ import Control.Monad.Http          (evalHttpT)
 import Control.Monad.Logger        (runStderrLoggingT)
 import Control.Monad.Reader        (runReaderT)
 import Data.Maybe                  (mapMaybe)
-import Data.Vector                 (Vector)
 import Network.HTTP.Client         (newManager)
 import Network.HTTP.Client.TLS     (tlsManagerSettings)
 import Text.Regex.Applicative.Text (anySym, match)

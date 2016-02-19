@@ -1,8 +1,8 @@
 {-# LANGUAGE CPP               #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE PolyKinds         #-}
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TypeOperators     #-}
+
 
 -- | API endpoints
 module FutuHours.Endpoints (
@@ -12,18 +12,11 @@ module FutuHours.Endpoints (
     getTimereports,
     ) where
 
-import Prelude        ()
-import Prelude.Compat
-
-#if MIN_VERSION_mtl(2,2,0)
-import Control.Monad.Except (throwError)
-#else
-import Control.Monad.Error (throwError)
-#endif
+import Futurice.Prelude
+import Prelude          ()
 
 import Control.Lens               ((^.))
 import Control.Monad.Http         (HttpT, evalHttpT)
-import Control.Monad.IO.Class     (MonadIO (..))
 import Control.Monad.Logger       (LoggingT, runStderrLoggingT)
 import Control.Monad.Reader       (ReaderT (..))
 import Control.Monad.Trans.Either (EitherT)
@@ -91,10 +84,6 @@ withPlanmillCfg action ctx username =do
     apiKey     <- maybe (throwError err403) pure =<< getPlanmillApiKey' ctx username
     let cfg = (ctxPlanmillCfg ctx) { PM.cfgUserId = planMillId, PM.cfgApiKey = apiKey }
     liftIO $ action cfg
-
--- TODO: move to prelude
-infixr 0 :$
-type (:$) (f :: k -> l) (x :: k) = f x
 
 type Stack = ReaderT PM.Cfg :$ LoggingT :$ HttpT IO
 

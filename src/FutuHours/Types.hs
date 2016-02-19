@@ -14,17 +14,13 @@ module FutuHours.Types (
     Timereport(..),
     ) where
 
-import Prelude        ()
-import Prelude.Compat
+import Futurice.Prelude
+import Prelude          ()
 
 import Data.Aeson.Extra (FromJSON, ToJSON)
 import Data.Aeson.TH    (Options (..), defaultOptions, deriveJSON)
 import Data.Char        (toLower)
-import Data.Hashable    (Hashable)
 import Data.Swagger     (ToParamSchema, ToSchema)
-import Data.Text        (Text)
-import Data.Typeable    (Typeable)
-import GHC.Generics     (Generic)
 import PlanMill.Types   (Identifier (..))
 import Servant          (Capture, FromText (..))
 import Servant.Docs     (ToSample (..))
