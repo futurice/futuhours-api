@@ -49,7 +49,7 @@ import qualified PlanMill.Test                  as PM (evalPlanMillIO)
 
 -- | Add planmill api key.
 addPlanmillApiKey :: MonadIO m => Context -> FUMUsername -> PlanmillApiKey -> m ()
-addPlanmillApiKey Context { ctxPostgresPool = pool } (FUMUsername username) (PlanmillApiKey apikey) =
+addPlanmillApiKey Context { ctxPostgresPool = pool } username apikey =
     liftIO $ withResource pool $ \conn -> do
         rows <- execute conn "INSERT INTO futuhours.apikeys (fum_username, planmill_apikey) VALUES (?, ?)" (username, apikey)
         print username
@@ -57,11 +57,11 @@ addPlanmillApiKey Context { ctxPostgresPool = pool } (FUMUsername username) (Pla
         print rows
 
 getPlanmillApiKey :: MonadIO m => Context -> FUMUsername -> m (Maybe PlanmillApiKey)
-getPlanmillApiKey  Context { ctxPostgresPool = pool } (FUMUsername username) =
+getPlanmillApiKey  Context { ctxPostgresPool = pool } username =
     liftIO $ withResource pool $ \conn -> do
         rows <- query conn "SELECT planmill_apikey FROM futuhours.apikeys WHERE fum_username = ? LIMIT 1" (Only username)
         return $ case rows of
-            (Only apikey : _) -> Just (PlanmillApiKey apikey)
+            (Only apikey : _) -> Just apikey
             _                 -> Nothing
 
 getPlanmillApiKey' :: (MonadIO m, Functor m) => Context -> FUMUsername -> m (Maybe PM.ApiKey)

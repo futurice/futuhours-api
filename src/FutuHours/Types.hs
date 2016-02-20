@@ -26,6 +26,8 @@ import Servant          (Capture, FromText (..))
 import Servant.Docs     (ToSample (..))
 import Servant.Docs     (DocCapture (..), ToCapture (..))
 
+import qualified Database.PostgreSQL.Simple.ToField as Postgres
+import qualified Database.PostgreSQL.Simple.FromField as Postgres
 import qualified Data.HashMap.Strict            as HM
 import qualified PlanMill.EndPoints.Projects    as PM
 import qualified PlanMill.EndPoints.Timereports as PM
@@ -48,7 +50,17 @@ instance ToJSON PlanmillApiKey
 instance FromJSON PlanmillApiKey
 instance ToSchema PlanmillApiKey
 
--- TODO: Postgres FromField / ToField for FUMUsername and PlanmillApiKey
+instance Postgres.ToField FUMUsername where
+    toField (FUMUsername name) = Postgres.toField name
+
+instance Postgres.ToField PlanmillApiKey where
+    toField (PlanmillApiKey key) = Postgres.toField key
+
+instance Postgres.FromField FUMUsername where
+    fromField f bs = FUMUsername <$> Postgres.fromField f bs
+
+instance Postgres.FromField PlanmillApiKey where
+    fromField f bs = PlanmillApiKey <$> Postgres.fromField f bs
 
 instance Hashable FUMUsername
 
