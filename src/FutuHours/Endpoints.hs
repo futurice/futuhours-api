@@ -1,8 +1,8 @@
+{-# LANGUAGE ConstraintKinds   #-}
 {-# LANGUAGE CPP               #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TypeOperators     #-}
-
 
 -- | API endpoints
 module FutuHours.Endpoints (

@@ -10,6 +10,14 @@ packages:
     commit: 5c5b57fc5927d5e84fb1c1e42ace701d0b938d66
   extra-dep: true
 - location:
+    git: https://github.com/futurice/haskell-futurice-prelude.git
+    commit: f0608a09e82ee45b30282c43cade8b4728415ba3
+  extra-dep: true
+- location:
+    git: https://github.com/futurice/haskell-monad-http.git
+    commit: 2169a95213ca2aec78bd43c3e81845b6c53d48a1
+  extra-dep: true
+- location:
     git: https://github.com/futurice/haskell-planmill-client.git
     commit: 874a8b0085bb5639f43a28094ea7b4bd1ea7fc93
   extra-dep: true

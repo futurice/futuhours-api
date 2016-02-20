@@ -22,12 +22,11 @@ library:
     - base-compat
     - blaze-html
     - bytestring
-    - containers
-    - deepseq
     - either
     - exceptions
     - fum-client
     - futulogo
+    - futurice-prelude
     - hashable
     - http-client
     - http-client-tls
@@ -53,7 +52,6 @@ library:
     - servant-swagger-ui
     - stm
     - swagger2
-    - tagged
     - text
     - transformers
     - unordered-containers
