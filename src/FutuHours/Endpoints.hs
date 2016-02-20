@@ -3,6 +3,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TypeOperators     #-}
+{-# LANGUAGE ScopedTypeVariables, FlexibleInstances, UndecidableInstances #-}
 
 -- | API endpoints
 module FutuHours.Endpoints (
@@ -16,6 +17,8 @@ import Futurice.Prelude
 import Prelude          ()
 
 import Control.Lens               ((^.))
+import Data.Aeson.Compat (FromJSON)
+import Control.Monad.Trans.Class (lift)
 import Control.Monad.Http         (HttpT, evalHttpT)
 import Control.Monad.Logger       (LoggingT, runStderrLoggingT)
 import Control.Monad.Reader       (ReaderT (..))
@@ -35,6 +38,7 @@ import FutuHours.Context
 import FutuHours.Types
 
 -- Planmill modules
+import Control.Monad.CryptoRandom.Extra (MonadInitHashDRBG (..), evalCRandTThrow, CRandT, GenError, HashDRBG)
 import           Control.Monad.PlanMill         (MonadPlanMill (..))
 import qualified PlanMill                       as PM (ApiKey (..), Cfg (..),
                                                        Identifier (..),
@@ -44,8 +48,10 @@ import qualified PlanMill.EndPoints.Assignments as PM (ReportableAssignment (..)
                                                        reportableAssignments)
 import qualified PlanMill.EndPoints.Timereports as PM (Timereport (..),
                                                        Timereports, timereports)
-import qualified PlanMill.Operational           as PM (PlanMillT, runPlanMillT)
-import qualified PlanMill.Test                  as PM (evalPlanMillIO)
+import qualified PlanMill.Operational           as PM (GenPlanMillT, runGenPlanMillT)
+import qualified PlanMill.Eval           as PM (evalPlanMill)
+
+import qualified PlanMill.Test           as PM (evalPlanMillIO)
 
 -- | Add planmill api key.
 addPlanmillApiKey :: MonadIO m => Context -> FUMUsername -> PlanmillApiKey -> m ()
@@ -86,9 +92,21 @@ withPlanmillCfg action ctx username =do
     liftIO $ action cfg
 
 type Stack = ReaderT PM.Cfg :$ LoggingT :$ HttpT IO
+type InnerStack = ReaderT PM.Cfg :$ CRandT HashDRBG GenError :$ Stack
 
-runPlanmillT :: PM.Cfg -> PM.PlanMillT Stack a -> IO a
-runPlanmillT cfg pm  = evalHttpT $ runStderrLoggingT $ flip runReaderT cfg $ PM.runPlanMillT pm
+class (Binary a, FromJSON a) => BinaryFromJSON a
+instance (Binary a, FromJSON a) => BinaryFromJSON a
+
+runPlanmillT :: forall a. PM.Cfg -> PM.GenPlanMillT BinaryFromJSON Stack a -> IO a
+runPlanmillT cfg pm = evalHttpT $ runStderrLoggingT $ flip runReaderT cfg $ do
+    g <- mkHashDRBG
+    flip evalCRandTThrow g $ flip runReaderT cfg $ action
+  where
+    action :: InnerStack a
+    action = PM.runGenPlanMillT evalPlanMill (lift . lift) pm
+
+    evalPlanMill :: forall b. BinaryFromJSON b => PM.PlanMill b -> InnerStack b
+    evalPlanMill = PM.evalPlanMill
 
 -- | Return projects for user
 --
