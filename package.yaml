@@ -20,6 +20,8 @@ library:
     - aeson                 >=0.8   && <0.10
     - aeson-extra           >=0.2.2 && <0.3
     - base-compat
+    - binary
+    - binary-tagged
     - blaze-html
     - bytestring
     - either

@@ -1,4 +1,4 @@
--- This file has been generated from package.yaml by hpack version 0.8.0.
+-- This file has been generated from package.yaml by hpack version 0.9.0.
 --
 -- see: https://github.com/sol/hpack
 
@@ -33,6 +33,8 @@ library
     , aeson                 >=0.8   && <0.10
     , aeson-extra           >=0.2.2 && <0.3
     , base-compat
+    , binary
+    , binary-tagged
     , blaze-html
     , bytestring
     , either
@@ -72,11 +74,13 @@ library
     , wai
     , warp
   exposed-modules:
+      Database.PostgreSQL.Simple.Fxtra
       FutuHours
       FutuHours.API
       FutuHours.Config
       FutuHours.Context
       FutuHours.Endpoints
+      FutuHours.PlanMill
       FutuHours.PlanMillUserIds
       FutuHours.Types
       Orphans

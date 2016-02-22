@@ -25,6 +25,7 @@ type LegacyFutuhoursAPI =
 
 type FutuHoursAPI = Get '[PlainText] Text
     :<|> "add-planmill-token" :> Capture "fum-id" FUMUsername :> ReqBody '[JSON] PlanmillApiKey :> Put '[JSON] ()
+    :<|> "balances" :> Get '[JSON] (Vector Balance)
     :<|> "legacy" :> LegacyFutuhoursAPI
 
 {-

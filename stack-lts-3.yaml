@@ -11,7 +11,7 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-futurice-prelude.git
-    commit: f0608a09e82ee45b30282c43cade8b4728415ba3
+    commit: ee589bda9f24dc9628a665eb32b92a9c20c0e202
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-monad-http.git
@@ -19,7 +19,7 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-planmill-client.git
-    commit: 874a8b0085bb5639f43a28094ea7b4bd1ea7fc93
+    commit: b9d1e2587269fdd33e3c2eb1b3b4632f14d58e4e
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-servant-cache.git
@@ -52,9 +52,9 @@ extra-deps:
 - strict-base-types-0.5.0
 - swagger2-2.0.1
 flags:
+  fum-client:
+    aeson-compat: false
   planmill-client:
     aeson-compat: false
   servant-status:
-    aeson-compat: false
-  fum-client:
     aeson-compat: false

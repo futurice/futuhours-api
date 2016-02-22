@@ -7,10 +7,8 @@ import Prelude          ()
 
 import Control.Applicative         (many)
 import Control.Lens                ((^.))
-import Control.Monad.Http          (evalHttpT)
-import Control.Monad.Logger        (runStderrLoggingT)
-import Control.Monad.Reader        (runReaderT)
 import Data.Maybe                  (mapMaybe)
+import Database.PostgreSQL.Simple  (Connection)
 import Network.HTTP.Client         (newManager)
 import Network.HTTP.Client.TLS     (tlsManagerSettings)
 import Text.Regex.Applicative.Text (anySym, match)
@@ -24,17 +22,19 @@ import qualified FUM
 import qualified PlanMill                 as PM
 import qualified PlanMill.EndPoints.Users as PM
 
+import FutuHours.PlanMill
 import FutuHours.Types
 
 planMillUserIds
     :: PM.Cfg
+    -> Connection
     -> FUM.AuthToken
     -> FUM.BaseUrl
     -> FUM.ListName
     -> IO PlanmillUserIdLookupTable
-planMillUserIds cfg authToken baseUrl listName = do
+planMillUserIds cfg conn authToken baseUrl listName = do
     manager <- newManager tlsManagerSettings
-    planmillUsers <- evalHttpT $ runStderrLoggingT $ flip runReaderT cfg $ PM.planmillAction PM.users
+    planmillUsers <- runCachedPlanmillT conn cfg $ PM.planmillAction PM.users
     fumUsers <- FUM.fetchList manager authToken baseUrl listName
     return $ process planmillUsers fumUsers
   where

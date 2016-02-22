@@ -11,7 +11,7 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-futurice-prelude.git
-    commit: f0608a09e82ee45b30282c43cade8b4728415ba3
+    commit: ee589bda9f24dc9628a665eb32b92a9c20c0e202
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-monad-http.git
@@ -39,7 +39,7 @@ extra-deps:
 - binary-orphans-0.1.4.0
 - binary-tagged-0.1.3.1
 - composition-extra-2.0.0
-- file-embed-0.0.9
+- file-embed-0.0.9.1
 - hashable-time-0.2
 - iso8601-time-0.1.4
 - JuicyPixels-3.2.7

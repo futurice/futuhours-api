@@ -12,6 +12,7 @@ module FutuHours.Types (
     PlanmillApiKey(..),
     PlanmillUserIdLookupTable,
     Timereport(..),
+    Balance(..),
     ) where
 
 import Futurice.Prelude
@@ -26,43 +27,79 @@ import Servant          (Capture, FromText (..))
 import Servant.Docs     (ToSample (..))
 import Servant.Docs     (DocCapture (..), ToCapture (..))
 
-import qualified Database.PostgreSQL.Simple.ToField as Postgres
+import qualified Data.HashMap.Strict                  as HM
 import qualified Database.PostgreSQL.Simple.FromField as Postgres
-import qualified Data.HashMap.Strict            as HM
-import qualified PlanMill.EndPoints.Projects    as PM
-import qualified PlanMill.EndPoints.Timereports as PM
-import qualified PlanMill.EndPoints.Users       as PM
+import qualified Database.PostgreSQL.Simple.ToField   as Postgres
+import qualified PlanMill.EndPoints.Projects          as PM
+import qualified PlanMill.EndPoints.Timereports       as PM
+import qualified PlanMill.EndPoints.Users             as PM
 
 import Orphans ()
+
+-------------------------------------------------------------------------------
+-- UserId - deprecated
+-------------------------------------------------------------------------------
 
 newtype UserId = UserId Int
   deriving (Generic) -- TODO: needed for ToParamSchema
 
-newtype FUMUsername = FUMUsername Text deriving (Eq, Show, Generic)
-newtype PlanmillApiKey = PlanmillApiKey Text deriving (Eq, Show, Generic)
-
-type PlanmillUserIdLookupTable = HM.HashMap FUMUsername PM.UserId
-
 instance ToParamSchema UserId
+
+instance ToCapture (Capture "userid" UserId) where
+    toCapture _ = DocCapture "userid" "PlanMill userid"
+instance FromText UserId where
+    fromText = fmap UserId . fromText
+
+-------------------------------------------------------------------------------
+-- FUMUsername
+-------------------------------------------------------------------------------
+
+newtype FUMUsername = FUMUsername Text
+    deriving (Eq, Ord, Show, Typeable, Generic)
+
+instance ToJSON FUMUsername
+instance ToSchema FUMUsername
 instance ToParamSchema FUMUsername
+
+instance ToCapture (Capture "fum-id" FUMUsername) where
+    toCapture _ = DocCapture "fum-id" "FUM username"
+
+instance FromText FUMUsername where
+    fromText = fmap FUMUsername . fromText
+
+instance Postgres.ToField FUMUsername where
+    toField (FUMUsername name) = Postgres.toField name
+
+instance Postgres.FromField FUMUsername where
+    fromField f bs = FUMUsername <$> Postgres.fromField f bs
+
+instance Hashable FUMUsername
+
+-------------------------------------------------------------------------------
+-- PlanmillApiKey
+-------------------------------------------------------------------------------
+
+newtype PlanmillApiKey = PlanmillApiKey Text
+    deriving (Eq, Ord, Show, Typeable, Generic)
 
 instance ToJSON PlanmillApiKey
 instance FromJSON PlanmillApiKey
 instance ToSchema PlanmillApiKey
 
-instance Postgres.ToField FUMUsername where
-    toField (FUMUsername name) = Postgres.toField name
+instance ToSample PlanmillApiKey PlanmillApiKey where
+    toSample _ = Just $ PlanmillApiKey "deadbeef12345678"
 
 instance Postgres.ToField PlanmillApiKey where
     toField (PlanmillApiKey key) = Postgres.toField key
 
-instance Postgres.FromField FUMUsername where
-    fromField f bs = FUMUsername <$> Postgres.fromField f bs
-
 instance Postgres.FromField PlanmillApiKey where
     fromField f bs = PlanmillApiKey <$> Postgres.fromField f bs
 
-instance Hashable FUMUsername
+type PlanmillUserIdLookupTable = HM.HashMap FUMUsername PM.UserId
+
+-------------------------------------------------------------------------------
+-- Timereport
+-------------------------------------------------------------------------------
 
 data Timereport = Timereport
     { timereportId      :: !PM.TimereportId
@@ -75,6 +112,26 @@ instance ToSample Timereport Timereport where
 
 instance ToJSON Timereport
 instance ToSchema Timereport
+
+-------------------------------------------------------------------------------
+-- Balance
+-------------------------------------------------------------------------------
+
+data Balance = Balance
+    { balanceUser  :: !FUMUsername
+    , balanceHours :: !Int
+    }
+    deriving (Eq, Ord, Show, Typeable, Generic)
+
+instance ToJSON Balance
+instance ToSchema Balance
+
+instance ToSample Balance Balance where
+    toSample _ = Just $ Balance (FUMUsername "user") 42
+
+-------------------------------------------------------------------------------
+-- Project
+-------------------------------------------------------------------------------
 
 data Project = Project
     { projectId   :: !PM.ProjectId
@@ -92,19 +149,4 @@ instance ToSchema Project
 
 instance ToSample Project Project where
     toSample _ = Just $ Project (Ident 42) "Projekti"
-
-instance ToCapture (Capture "userid" UserId) where
-    toCapture _ = DocCapture "userid" "PlanMill userid"
-
-instance ToCapture (Capture "fum-id" FUMUsername) where
-    toCapture _ = DocCapture "fum-id" "FUM username"
-
-instance ToSample PlanmillApiKey PlanmillApiKey where
-    toSample _ = Just $ PlanmillApiKey "deadbeef12345678"
-
-instance FromText UserId where
-    fromText = fmap UserId . fromText
-
-instance FromText FUMUsername where
-    fromText = fmap FUMUsername . fromText
 
