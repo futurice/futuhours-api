@@ -1,6 +1,8 @@
 {-# LANGUAGE CPP               #-}
 {-# LANGUAGE ConstraintKinds   #-}
+{-# LANGUAGE DataKinds         #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes        #-}
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TypeOperators     #-}
 
@@ -21,6 +23,7 @@ import Control.Monad.Trans.Either       (EitherT)
 import Data.List                        (nub)
 import Data.Pool                        (withResource)
 import Database.PostgreSQL.Simple.Fxtra (Only (..), execute, singleQuery)
+import Generics.SOP                     (All)
 import Servant                          (ServantErr)
 
 import Servant.Server (err403, err404)
@@ -43,6 +46,8 @@ import qualified PlanMill.EndPoints.Assignments as PM (ReportableAssignment (..)
                                                        reportableAssignments)
 import qualified PlanMill.EndPoints.Timereports as PM (Timereport (..),
                                                        Timereports, timereports)
+import qualified PlanMill.EndPoints.Users       as PM (userTimeBalance)
+import qualified PlanMill.Types.TimeBalance     as PM (TimeBalance (..))
 
 import qualified PlanMill.Test as PM (evalPlanMillIO)
 
@@ -93,7 +98,13 @@ getProjects Context { ctxPlanmillCfg = cfg } (UserId uid) =
     pmToFh PM.ReportableAssignment{..} = Project raProject raProjectName
 
 getBalances :: MonadIO m => Context -> m (V.Vector Balance)
-getBalances _ = return V.empty
+getBalances ctx = executeAdminPlanmill ctx p $
+    V.fromList <$> traverse getBalance (HM.toList (ctxPlanmillUserLookup ctx))
+  where
+    p = Proxy :: Proxy '[PM.TimeBalance]
+    getBalance (fumId, pmId) = do
+        PM.TimeBalance balanceMinutes <- planmillAction $ PM.userTimeBalance pmId
+        pure $ Balance fumId (round $ balanceMinutes / 60)
 
 ------------------------------------------------------------------------
 -- Helpers
@@ -105,3 +116,13 @@ withPlanmillCfg action ctx username =do
     apiKey     <- maybe (throwError err403) pure =<< getPlanmillApiKey' ctx username
     let cfg = (ctxPlanmillCfg ctx) { PM.cfgUserId = planMillId, PM.cfgApiKey = apiKey }
     liftIO $ action cfg
+
+executeAdminPlanmill
+    :: forall m a as. (MonadIO m, All BinaryFromJSON as)
+    => Context
+    -> Proxy as
+    -> (forall n. (Applicative n, MonadPlanMill n, All (MonadPlanMillC n) as) => n a)
+    -> m a
+executeAdminPlanmill ctx _ action =
+    liftIO $ withResource (ctxPostgresPool ctx) $ \conn ->
+        runCachedPlanmillT conn (ctxPlanmillCfg ctx) action

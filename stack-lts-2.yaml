@@ -43,6 +43,7 @@ extra-deps:
 - hashable-time-0.2
 - iso8601-time-0.1.4
 - JuicyPixels-3.2.7
+- lattices-1.5.0
 - monad-time-0.1
 - postgresql-simple-url-0.1.0.1
 - regex-applicative-text-0.1.0.1
@@ -56,6 +57,9 @@ extra-deps:
 - servant-yaml-0.1.0.0
 - strict-base-types-0.5.0
 - swagger2-2.0.1
+- universe-base-1.0.2.1
+- universe-instances-base-1.0
+- universe-reverse-instances-1.0
 flags:
   fum-client:
     aeson-compat: false

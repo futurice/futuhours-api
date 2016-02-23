@@ -63,7 +63,7 @@ runCachedPlanmillT conn cfg pm =
 
     evalPlanMill :: forall b. BinaryFromJSON b => PM.PlanMill b -> InnerStack b
     evalPlanMill req = do
-        r <- liftIO $ Postgres.singleQuery conn "SELECT data FROM futuhours.cache where path = ? and updated + interval '15 minutes' > current_timestamp;" (Only url)
+        r <- liftIO $ Postgres.singleQuery conn "SELECT data FROM futuhours.cache WHERE path = ? and updated + interval '150 minutes' > current_timestamp;" (Only url)
         case r of
             Nothing -> evaledPlanMill
             Just (Only (Postgres.Binary bs)) -> case taggedDecodeOrFail bs of
@@ -84,6 +84,6 @@ runCachedPlanmillT conn cfg pm =
             x <- PM.evalPlanMill req
             let bs = taggedEncode x
             liftIO $ Postgres.withTransaction conn $ do
-                void $ Postgres.execute conn "DELETE FROM futuhours.cache WHERE path ?" (Only url)
+                void $ Postgres.execute conn "DELETE FROM futuhours.cache WHERE path = ?" (Only url)
                 void $ Postgres.execute conn "INSERT INTO futuhours.cache (path, data) VALUES (?, ?)" (url, Postgres.Binary bs)
             pure x

@@ -42,9 +42,11 @@ library
     , fum-client
     , futulogo
     , futurice-prelude
+    , generics-sop
     , hashable
     , http-client
     , http-client-tls
+    , lattices >=1.4.1
     , lens
     , markdown
     , monad-http
