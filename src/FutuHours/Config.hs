@@ -5,16 +5,14 @@ module FutuHours.Config (
     defaultPort,
     ) where
 
-import Prelude        ()
-import Prelude.Compat
+import Futurice.Prelude
+import Prelude          ()
 
 import Data.ByteString    (ByteString)
-import Data.String        (fromString)
-import Data.Word          (Word64)
 import System.Environment (lookupEnv)
 import Text.Read          (readMaybe)
 
-import Database.PostgreSQL.Simple     (ConnectInfo(..))
+import Database.PostgreSQL.Simple     (ConnectInfo (..))
 import Database.PostgreSQL.Simple.URL (parseDatabaseUrl)
 
 import qualified Data.Text                 as T

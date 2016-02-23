@@ -7,11 +7,9 @@
 {-# LANGUAGE TypeOperators         #-}
 module FutuHours.API where
 
-import Prelude        ()
-import Prelude.Compat
+import Futurice.Prelude
+import Prelude          ()
 
-import Data.Text        (Text)
-import Data.Vector      (Vector)
 import Futurice.Colour
 import Servant
 import Servant.Docs     (ExtraInfo)
@@ -27,6 +25,7 @@ type LegacyFutuhoursAPI =
 
 type FutuHoursAPI = Get '[PlainText] Text
     :<|> "add-planmill-token" :> Capture "fum-id" FUMUsername :> ReqBody '[JSON] PlanmillApiKey :> Put '[JSON] ()
+    :<|> "balances" :> Get '[JSON] (Vector Balance)
     :<|> "legacy" :> LegacyFutuhoursAPI
 
 {-

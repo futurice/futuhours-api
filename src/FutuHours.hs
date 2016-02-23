@@ -8,10 +8,10 @@
 {-# LANGUAGE TypeOperators         #-}
 module FutuHours (defaultMain) where
 
-import Prelude        ()
-import Prelude.Compat
+import Futurice.Prelude
+import Prelude          ()
 
-import Data.Pool           (createPool)
+import Data.Pool           (createPool, withResource)
 import Network.Wai
 import Servant
 import Servant.Cache.Class (DynMapCache)
@@ -35,6 +35,7 @@ import Orphans ()
 server :: Context -> Server FutuHoursAPI
 server ctx = pure "Hello to futuhours api"
     :<|> addPlanmillApiKey ctx
+    :<|> getBalances ctx
     :<|> getTimereports ctx
     :<|> getProjects ctx
 
@@ -56,7 +57,8 @@ defaultMain = do
             , PM.cfgBaseUrl = cfgPlanmillUrl
             }
     postgresPool <- createPool (Postgres.connect cfgPostgresConnInfo) Postgres.close 1 10 5
-    planmillUserLookup <- planMillUserIds pmCfg cfgFumToken cfgFumBaseurl cfgFumList
+    planmillUserLookup <- withResource postgresPool $ \conn ->
+        planMillUserIds pmCfg conn cfgFumToken cfgFumBaseurl cfgFumList
     let ctx = Context pmCfg postgresPool planmillUserLookup
     cache <- DynMap.newIO
     let app' = app cache ctx

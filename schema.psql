@@ -2,3 +2,9 @@ create table futuhours.apikeys (
   fum_username TEXT PRIMARY KEY,
   planmill_apikey TEXT NOT NULL
 );
+
+create table futuhours.cache (
+  path TEXT PRIMARY KEY,
+  updated TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  data BYTEA NOT NULL
+);
