@@ -17,6 +17,7 @@ import Servant
 import Servant.Cache.Class (DynMapCache)
 import Servant.Futurice
 import System.IO           (hPutStrLn, stderr)
+import Network.Wai.Middleware.Cors (simpleCors)
 
 import qualified Database.PostgreSQL.Simple    as Postgres
 import qualified Network.Wai.Handler.Warp      as Warp
@@ -27,6 +28,7 @@ import qualified Servant.Cache.Internal.DynMap as DynMap
 import Futurice.App.FutuHours.API
 import Futurice.App.FutuHours.Config          (Config (..), getConfig)
 import Futurice.App.FutuHours.Endpoints
+import Futurice.App.FutuHours.Types
 import Futurice.App.FutuHours.PlanMillUserIds (planMillUserIds)
 
 import Futurice.App.FutuHours.Orphans ()
@@ -38,6 +40,9 @@ server ctx = pure "Hello to futuhours api"
     :<|> getBalances ctx
     :<|> getTimereports ctx
     :<|> getProjects ctx
+    :<|> pure (Envelope empty)
+    :<|> getLegacyUsers ctx
+    :<|> pure (Envelope empty)
 
 -- | Server with docs and cache and status
 server' :: DynMapCache -> Context -> Server FutuHoursAPI'
@@ -45,7 +50,7 @@ server' cache ctx = futuriceApiServer cache futuhoursAPI futuhoursExtraDocs (ser
 
 -- | Wai application
 app :: DynMapCache -> Context -> Application
-app cache ctx = serve futuhoursAPI' (server' cache ctx)
+app cache ctx = simpleCors $ serve futuhoursAPI' (server' cache ctx)
 
 defaultMain :: IO ()
 defaultMain = do

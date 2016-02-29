@@ -52,8 +52,13 @@ runPlanmillT cfg pm =
     evalPlanMill :: forall b. BinaryFromJSON b => PM.PlanMill b -> InnerStack b
     evalPlanMill = PM.evalPlanMill
 
-runCachedPlanmillT :: forall a. Connection -> PM.Cfg -> PM.GenPlanMillT BinaryFromJSON Stack a -> IO a
-runCachedPlanmillT conn cfg pm =
+runCachedPlanmillT
+    :: forall a. Connection                    -- ^ Postgres connection
+    -> PM.Cfg                                  -- ^ Planmill config
+    -> Bool                                    -- ^ whether to ask cache
+    -> PM.GenPlanMillT BinaryFromJSON Stack a  -- ^ Action
+    -> IO a
+runCachedPlanmillT conn cfg askCache pm =
     evalHttpT $ runStderrLoggingT $ flip runReaderT cfg $ do
         g <- mkHashDRBG
         flip evalCRandTThrow g $ flip runReaderT cfg $ action
@@ -62,19 +67,21 @@ runCachedPlanmillT conn cfg pm =
     action = PM.runGenPlanMillT evalPlanMill (lift . lift) pm
 
     evalPlanMill :: forall b. BinaryFromJSON b => PM.PlanMill b -> InnerStack b
-    evalPlanMill req = do
-        r <- liftIO $ Postgres.singleQuery conn "SELECT data FROM futuhours.cache WHERE path = ? and updated + interval '150 minutes' > current_timestamp;" (Only url)
-        case r of
-            Nothing -> evaledPlanMill
-            Just (Only (Postgres.Binary bs)) -> case taggedDecodeOrFail bs of
-                Right (bsLeft, _, x)
-                    | BSL.null bsLeft -> pure x
-                    | otherwise       -> do
-                        $(logDebug) $ "Didn't consume all input from cache: " <> url
-                        evaledPlanMill
-                Left (_, _, err) -> do
-                        $(logWarn) $ "Cannot decode cached value: " <> url <> " -- " <> T.pack err
-                        evaledPlanMill
+    evalPlanMill req = if askCache
+        then do
+            r <- liftIO $ Postgres.singleQuery conn "SELECT data FROM futuhours.cache WHERE path = ? and updated + interval '150 minutes' > current_timestamp;" (Only url)
+            case r of
+                Nothing -> evaledPlanMill
+                Just (Only (Postgres.Binary bs)) -> case taggedDecodeOrFail bs of
+                    Right (bsLeft, _, x)
+                        | BSL.null bsLeft -> pure x
+                        | otherwise       -> do
+                            $(logDebug) $ "Didn't consume all input from cache: " <> url
+                            evaledPlanMill
+                    Left (_, _, err) -> do
+                            $(logWarn) $ "Cannot decode cached value: " <> url <> " -- " <> T.pack err
+                            evaledPlanMill
+        else evaledPlanMill 
       where
         url :: Text
         url = T.pack $ PM.fromUrlParts (PM.requestUrlParts req)

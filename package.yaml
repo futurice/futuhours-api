@@ -61,6 +61,7 @@ library:
     - unordered-containers
     - vector
     - wai
+    - wai-cors
     - warp
 
 executables:

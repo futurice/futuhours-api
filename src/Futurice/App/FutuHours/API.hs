@@ -12,20 +12,23 @@ import Prelude          ()
 
 import Futurice.Colour
 import Servant
-import Servant.Docs     (ExtraInfo)
+import Servant.Docs      (ExtraInfo)
 import Servant.Futurice
 
-import Futurice.App.FutuHours.Types
 import Futurice.App.FutuHours.Orphans ()
+import Futurice.App.FutuHours.Types
 
 type LegacyFutuhoursAPI =
     "timereports" :> Capture "fum-id" FUMUsername :> Get '[JSON] (Vector Timereport)
     :<|> "projects" :> Capture "userid" UserId :> Get '[JSON] (Vector Project)
+    :<|> "holidays" :> Get '[JSON] (Envelope ()) -- TODO
+    :<|> "users" :> Header "Http-Remote-User" Text :> Get '[JSON] (Envelope User) -- TODO
+    :<|> "hours" :> Get '[JSON] (Envelope ()) -- TODO
 
 type FutuHoursAPI = Get '[PlainText] Text
     :<|> "add-planmill-token" :> Capture "fum-id" FUMUsername :> ReqBody '[JSON] PlanmillApiKey :> Put '[JSON] ()
     :<|> "balances" :> Get '[JSON] (Vector Balance)
-    :<|> "legacy" :> LegacyFutuhoursAPI
+    :<|> "api" :> "v1" :> LegacyFutuhoursAPI
 
 {-
     :<|> "user"     :> Get '[JSON] User
