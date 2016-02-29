@@ -1,10 +1,10 @@
-module FutuHours.Context where
+module Futurice.App.FutuHours.Context where
 
 import Data.Pool                  (Pool)
 import Database.PostgreSQL.Simple (Connection)
 import PlanMill                   (Cfg (..))
 
-import FutuHours.Types
+import Futurice.App.FutuHours.Types
 
 -- | We probably will have some
 data Context = Context

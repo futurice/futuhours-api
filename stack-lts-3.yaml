@@ -3,7 +3,7 @@ packages:
 - '.'
 - location:
     git: https://github.com/futurice/haskell-fum-client.git
-    commit: 92da27db93ca9606cc30390534b8296b16e26723
+    commit: 50dea8750e538eefdda563a13f6b8e7b53291087
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-futulogo.git
@@ -11,7 +11,7 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-futurice-prelude.git
-    commit: ee589bda9f24dc9628a665eb32b92a9c20c0e202
+    commit: 052fc6890bb6edcc85100f9e5a54f228c28d61b5
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-monad-http.git
@@ -19,7 +19,7 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-planmill-client.git
-    commit: b9d1e2587269fdd33e3c2eb1b3b4632f14d58e4e
+    commit: a08bb46072a9dd265093e491afdf6ea108a60fe5
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-servant-cache.git

@@ -5,7 +5,7 @@
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
-module FutuHours.API where
+module Futurice.App.FutuHours.API where
 
 import Futurice.Prelude
 import Prelude          ()
@@ -15,9 +15,8 @@ import Servant
 import Servant.Docs     (ExtraInfo)
 import Servant.Futurice
 
-import FutuHours.Types
-
-import Orphans ()
+import Futurice.App.FutuHours.Types
+import Futurice.App.FutuHours.Orphans ()
 
 type LegacyFutuhoursAPI =
     "timereports" :> Capture "fum-id" FUMUsername :> Get '[JSON] (Vector Timereport)

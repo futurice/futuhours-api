@@ -5,7 +5,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE TemplateHaskell       #-}
-module FutuHours.Types (
+module Futurice.App.FutuHours.Types (
     Project(..),
     UserId(..),
     FUMUsername(..),
@@ -34,7 +34,7 @@ import qualified PlanMill.EndPoints.Projects          as PM
 import qualified PlanMill.EndPoints.Timereports       as PM
 import qualified PlanMill.EndPoints.Users             as PM
 
-import Orphans ()
+import Futurice.App.FutuHours.Orphans ()
 
 -------------------------------------------------------------------------------
 -- UserId - deprecated

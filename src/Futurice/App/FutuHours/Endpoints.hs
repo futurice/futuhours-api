@@ -7,7 +7,7 @@
 {-# LANGUAGE TypeOperators     #-}
 
 -- | API endpoints
-module FutuHours.Endpoints (
+module Futurice.App.FutuHours.Endpoints (
     Context(..),
     addPlanmillApiKey,
     getProjects,
@@ -18,7 +18,6 @@ module FutuHours.Endpoints (
 import Futurice.Prelude
 import Prelude          ()
 
-import Control.Lens                     ((^.))
 import Control.Monad.Trans.Either       (EitherT)
 import Data.List                        (nub)
 import Data.Pool                        (withResource)
@@ -32,9 +31,9 @@ import qualified Data.HashMap.Strict as HM
 import qualified Data.Text.Encoding  as TE
 import qualified Data.Vector         as V
 
-import FutuHours.Context
-import FutuHours.PlanMill
-import FutuHours.Types
+import Futurice.App.FutuHours.Context
+import Futurice.App.FutuHours.PlanMill
+import Futurice.App.FutuHours.Types
 
 -- Planmill modules
 import           Control.Monad.PlanMill         (MonadPlanMill (..))
