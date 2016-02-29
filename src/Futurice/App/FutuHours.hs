@@ -6,7 +6,7 @@
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
-module FutuHours (defaultMain) where
+module Futurice.App.FutuHours (defaultMain) where
 
 import Futurice.Prelude
 import Prelude          ()
@@ -24,12 +24,12 @@ import qualified PlanMill                      as PM (Cfg (..))
 import qualified Servant.Cache.Internal.DynMap as DynMap
 
 -- FutuHours modules
-import FutuHours.API
-import FutuHours.Config          (Config (..), getConfig)
-import FutuHours.Endpoints
-import FutuHours.PlanMillUserIds (planMillUserIds)
+import Futurice.App.FutuHours.API
+import Futurice.App.FutuHours.Config          (Config (..), getConfig)
+import Futurice.App.FutuHours.Endpoints
+import Futurice.App.FutuHours.PlanMillUserIds (planMillUserIds)
 
-import Orphans ()
+import Futurice.App.FutuHours.Orphans ()
 
 -- | API server
 server :: Context -> Server FutuHoursAPI

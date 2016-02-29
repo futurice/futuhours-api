@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 -- | *TODO:* extract into common library
-module FutuHours.PlanMillUserIds (planMillUserIds) where
+module Futurice.App.FutuHours.PlanMillUserIds (planMillUserIds) where
 
 import Futurice.Prelude
 import Prelude          ()
@@ -19,8 +19,8 @@ import qualified FUM
 import qualified PlanMill                 as PM
 import qualified PlanMill.EndPoints.Users as PM
 
-import FutuHours.PlanMill
-import FutuHours.Types
+import Futurice.App.FutuHours.PlanMill
+import Futurice.App.FutuHours.Types
 
 planMillUserIds
     :: PM.Cfg

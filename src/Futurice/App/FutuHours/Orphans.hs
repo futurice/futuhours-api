@@ -6,7 +6,7 @@
 {-# LANGUAGE TypeSynonymInstances  #-}
 {-# LANGUAGE UndecidableInstances  #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-module Orphans () where
+module Futurice.App.FutuHours.Orphans () where
 
 import Prelude        ()
 import Prelude.Compat

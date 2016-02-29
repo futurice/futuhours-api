@@ -4,7 +4,7 @@
 {-# LANGUAGE TemplateHaskell      #-}
 {-# LANGUAGE TypeOperators        #-}
 {-# LANGUAGE UndecidableInstances #-}
-module FutuHours.PlanMill where
+module Futurice.App.FutuHours.PlanMill where
 
 import Futurice.Prelude
 import Prelude          ()

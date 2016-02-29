@@ -1,5 +1,5 @@
 {-# LANGUAGE GADTs #-}
-module FutuHours.Config (
+module Futurice.App.FutuHours.Config (
     Config(..),
     getConfig,
     defaultPort,
