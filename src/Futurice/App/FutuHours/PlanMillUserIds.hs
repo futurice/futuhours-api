@@ -14,10 +14,8 @@ import Text.Regex.Applicative.Text (anySym, match)
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Vector         as V
 
-import qualified Control.Monad.PlanMill   as PM
 import qualified FUM
-import qualified PlanMill                 as PM
-import qualified PlanMill.EndPoints.Users as PM
+import qualified PlanMill as PM
 
 import Futurice.App.FutuHours.PlanMill
 import Futurice.App.FutuHours.Types

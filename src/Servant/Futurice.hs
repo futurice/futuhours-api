@@ -7,7 +7,6 @@ module Servant.Futurice (
     FuturiceAPI,
     futuriceApiServer,
     SwaggerSchemaEndpoint,
-    DocsAPI,
     ) where
 
 import Futurice.Prelude
@@ -19,43 +18,20 @@ import Data.Swagger
 import Futurice.Colour          (SColour)
 import Servant
 import Servant.Cache.Class      (DynMapCache)
-import Servant.Docs             (DocIntro (..), ExtraInfo, HasDocs, docsWith,
-                                 markdown)
 import Servant.Futurice.Favicon (FutuFaviconAPI, serveFutuFavicon)
 import Servant.Futurice.Status  hiding (info)
 import Servant.Swagger
 import Servant.Swagger.UI
-import Text.Blaze.Html          (Html)
 
-import qualified Data.Text                     as T
 import qualified Servant.Cache.Internal.DynMap as DynMap
-import qualified Servant.HTML.Blaze            as Blaze
-import qualified Text.Markdown                 as Markdown
-
-type DocsAPI =
-         "docs.md"   :> Get '[PlainText] T.Text
-    :<|> "docs.html" :> Get '[Blaze.HTML] Html
 
 type SwaggerSchemaEndpoint = "swagger.js" :> Get '[JSON] Swagger
 
 type FuturiceAPI api colour = api
-    :<|> DocsAPI
     :<|> SwaggerSchemaEndpoint
     :<|> SwaggerUI "ui" SwaggerSchemaEndpoint (SwaggerSchemaEndpoint :<|> api)
     :<|> FutuFaviconAPI colour
     :<|> StatusAPI
-
-serveDocs :: HasDocs api => Proxy api -> ExtraInfo api -> Server DocsAPI
-serveDocs api extra = pure docsMd :<|> pure docsHtml
-  where
-    docsHtml = Markdown.markdown Markdown.def (docsMd ^. lazy)
-    docsMd = T.pack docs
-
-    docs :: String
-    docs = markdown $ docsWith [intro] extra api
-
-    intro :: DocIntro
-    intro = DocIntro "Welcome" ["This is FutuHours API.", "Enjoy!"]
 
 stats :: DynMapCache -> StatusInfoIO
 stats dmap = gcStatusInfo <> dynmapStats
@@ -73,14 +49,12 @@ swaggerDoc proxy = toSwagger proxy
     & info.description ?~ "This is an API that tests servant-swagger support "
 
 futuriceApiServer
-    :: forall api colour. (HasDocs api, HasSwagger api, SColour colour)
+    :: forall api colour. (HasSwagger api, SColour colour)
     => DynMapCache
     -> Proxy api
-    -> ExtraInfo api
     -> Server api
     -> Server (FuturiceAPI api colour)
-futuriceApiServer cache papi extraInfo server = server
-    :<|> serveDocs papi extraInfo
+futuriceApiServer cache papi server = server
     :<|> return (swaggerDoc papi)
     :<|> swaggerUIServer
     :<|> serveFutuFavicon

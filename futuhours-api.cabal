@@ -30,8 +30,9 @@ library
   ghc-options: -Wall
   build-depends:
       base                  >=4.7   && <4.9
-    , aeson                 >=0.8   && <0.10
-    , aeson-extra           >=0.2.2 && <0.3
+    , aeson                 >=0.8   && <0.12
+    , aeson-compat          >=0.3.1 && <0.4
+    , aeson-extra           >=0.3.1 && <0.4
     , base-compat
     , binary
     , binary-tagged
@@ -53,6 +54,7 @@ library
     , monad-logger
     , mtl
     , operational
+    , parsec
     , planmill-client
     , postgresql-simple
     , postgresql-simple-url
@@ -68,8 +70,10 @@ library
     , servant-swagger
     , servant-swagger-ui
     , stm
+    , time-parsers
     , swagger2
     , text
+    , time
     , transformers
     , unordered-containers
     , vector

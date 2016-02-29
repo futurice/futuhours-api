@@ -81,7 +81,7 @@ runCachedPlanmillT conn cfg askCache pm =
                     Left (_, _, err) -> do
                             $(logWarn) $ "Cannot decode cached value: " <> url <> " -- " <> T.pack err
                             evaledPlanMill
-        else evaledPlanMill 
+        else evaledPlanMill
       where
         url :: Text
         url = T.pack $ PM.fromUrlParts (PM.requestUrlParts req)

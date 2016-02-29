@@ -11,32 +11,22 @@ module Futurice.App.FutuHours.Orphans () where
 import Prelude        ()
 import Prelude.Compat
 
-import Data.Proxy     (Proxy (..))
-import Data.Text      (Text)
-import PlanMill.Types (Identifier (..))
-import Servant.Docs   (ToSample (..))
-
-import Data.Aeson.Compat (Value(..))
-
-import qualified Data.Vector as V
-
+import Data.Aeson.Compat  (Value (..))
 import Data.Swagger
-
-instance ToSample Text Text where
-    toSample _ = Nothing
-
-instance ToSample a b => ToSample (V.Vector a) (V.Vector b) where
-    toSample _ = Just . V.fromList . map snd . toSamples $ (Proxy :: Proxy a)
+import Data.Time          (Day)
+import Data.Time.Parsers  (day)
+import PlanMill.Types     (Identifier (..))
+import Servant            (FromText (..))
+import Text.Parsec        (parse)
+import Text.Parsec.String ()
 
 instance ToSchema (Identifier a)
-
-instance ToSample () () where
-    toSample _ = Just ()
-
-instance ToSample Value Value where
-    toSample _ = Nothing
 
 instance ToSchema Value where
     declareNamedSchema _ = pure $ NamedSchema (Just "JSON Value") s
       where
         s = mempty
+
+instance FromText Day where
+    fromText t = either (const Nothing) return $
+        parse day "FromText Day" t
