@@ -31,7 +31,7 @@ planMillUserIds
     -> IO PlanmillUserIdLookupTable
 planMillUserIds cfg conn authToken baseUrl listName = do
     manager <- newManager tlsManagerSettings
-    planmillUsers <- runCachedPlanmillT conn cfg $ PM.planmillAction PM.users
+    planmillUsers <- runCachedPlanmillT conn cfg True $ PM.planmillAction PM.users
     fumUsers <- FUM.fetchList manager authToken baseUrl listName
     return $ process planmillUsers fumUsers
   where

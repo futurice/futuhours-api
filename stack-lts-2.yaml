@@ -60,6 +60,7 @@ extra-deps:
 - universe-base-1.0.2.1
 - universe-instances-base-1.0
 - universe-reverse-instances-1.0
+- wai-cors-0.2.4
 flags:
   fum-client:
     aeson-compat: false
@@ -71,3 +72,5 @@ flags:
     aeson-compat: false
   servant-status:
     aeson-compat: false
+  wai-cors:
+    transformers-3: true
