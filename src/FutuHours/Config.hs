@@ -109,7 +109,7 @@ instance FromEnvVar FUM.BaseUrl where
     fromEnvVar = Just . FUM.BaseUrl
 
 instance FromEnvVar FUM.ListName where
-    fromEnvVar = Just . FUM.ListName
+    fromEnvVar = fmap FUM.ListName . fromEnvVar
 
 instance FromEnvVar ConnectInfo where
     fromEnvVar = parseDatabaseUrl

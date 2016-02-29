@@ -18,7 +18,6 @@ module FutuHours.Endpoints (
 import Futurice.Prelude
 import Prelude          ()
 
-import Control.Lens                     ((^.))
 import Control.Monad.Trans.Either       (EitherT)
 import Data.List                        (nub)
 import Data.Pool                        (withResource)

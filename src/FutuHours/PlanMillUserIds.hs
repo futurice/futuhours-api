@@ -5,8 +5,6 @@ module FutuHours.PlanMillUserIds (planMillUserIds) where
 import Futurice.Prelude
 import Prelude          ()
 
-import Control.Applicative         (many)
-import Control.Lens                ((^.), view)
 import Data.Maybe                  (mapMaybe)
 import Database.PostgreSQL.Simple  (Connection)
 import Network.HTTP.Client         (newManager)
@@ -14,7 +12,6 @@ import Network.HTTP.Client.TLS     (tlsManagerSettings)
 import Text.Regex.Applicative.Text (anySym, match)
 
 import qualified Data.HashMap.Strict as HM
-import qualified Data.Text           as T
 import qualified Data.Vector         as V
 
 import qualified Control.Monad.PlanMill   as PM
@@ -51,10 +48,10 @@ planMillUserIds cfg conn authToken baseUrl listName = do
     process' :: Vector PM.User -> FUM.User -> Maybe (FUMUsername, PM.UserId)
     process' planmillUsers fumUser = case V.find p planmillUsers of
         Nothing           -> Nothing
-        Just planmillUser -> Just (FUMUsername fumUserName, planmillUser ^. PM.identifier)
+        Just planmillUser -> Just (FUMUsername (FUM._getUserName fumUserName), planmillUser ^. PM.identifier)
       where
         fumUserName = fumUser ^. FUM.userName
-        fumUserNameStr = T.unpack fumUserName
+        fumUserNameStr = fumUserName ^. FUM.getUserName . from packed
         p planmillUser = case match ("https://login.futurice.com/openid/" *> many anySym) (PM.uUserName planmillUser) of
             -- TODO: here we have to use enumerations api later
             Just name  -> PM.uPassive planmillUser /= Just 1 && name == fumUserNameStr
