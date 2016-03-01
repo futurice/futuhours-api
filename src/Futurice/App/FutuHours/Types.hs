@@ -16,6 +16,7 @@ module Futurice.App.FutuHours.Types (
     Balance(..),
     Envelope(..),
     User(..),
+    Hour(..),
     ) where
 
 import Futurice.Prelude
@@ -24,21 +25,16 @@ import Prelude          ()
 import Data.Aeson.Extra (FromJSON, ToJSON (..), Value (..), object, (.=))
 import Data.Aeson.TH    (Options (..), defaultOptions, deriveJSON)
 import Data.Char        (toLower)
-import Data.Swagger     (ToParamSchema, ToSchema(..))
-import PlanMill.Types   (Identifier (..))
+import Data.Swagger     (ToParamSchema, ToSchema (..))
 import Servant          (Capture, FromText (..))
-import Servant.Docs     (ToSample (..))
 import Servant.Docs     (DocCapture (..), ToCapture (..))
 
+import qualified Data.Aeson.Types                     as Aeson
 import qualified Data.HashMap.Strict                  as HM
+import qualified Data.Swagger                         as Swagger
 import qualified Database.PostgreSQL.Simple.FromField as Postgres
 import qualified Database.PostgreSQL.Simple.ToField   as Postgres
-import qualified PlanMill.EndPoints.Projects          as PM
-import qualified PlanMill.EndPoints.Timereports       as PM
-import qualified PlanMill.EndPoints.Users             as PM
-
-import qualified Data.Aeson.Types as Aeson
-import qualified Data.Swagger as Swagger
+import qualified PlanMill                             as PM
 
 import Futurice.App.FutuHours.Orphans ()
 
@@ -53,6 +49,7 @@ instance ToParamSchema UserId
 
 instance ToCapture (Capture "userid" UserId) where
     toCapture _ = DocCapture "userid" "PlanMill userid"
+
 instance FromText UserId where
     fromText = fmap UserId . fromText
 
@@ -92,9 +89,6 @@ instance ToJSON PlanmillApiKey
 instance FromJSON PlanmillApiKey
 instance ToSchema PlanmillApiKey
 
-instance ToSample PlanmillApiKey PlanmillApiKey where
-    toSample _ = Just $ PlanmillApiKey "deadbeef12345678"
-
 instance Postgres.ToField PlanmillApiKey where
     toField (PlanmillApiKey key) = Postgres.toField key
 
@@ -113,9 +107,6 @@ data Timereport = Timereport
     }
     deriving (Generic)
 
-instance ToSample Timereport Timereport where
-    toSample _ = Nothing
-
 instance ToJSON Timereport
 instance ToSchema Timereport
 
@@ -131,9 +122,6 @@ data Balance = Balance
 
 instance ToJSON Balance
 instance ToSchema Balance
-
-instance ToSample Balance Balance where
-    toSample _ = Just $ Balance (FUMUsername "user") 42
 
 -------------------------------------------------------------------------------
 -- Project
@@ -152,9 +140,6 @@ $(deriveJSON
     ''Project)
 
 instance ToSchema Project
-
-instance ToSample Project Project where
-    toSample _ = Just $ Project (Ident 42) "Projekti"
 
 -------------------------------------------------------------------------------
 -- Envelope
@@ -176,9 +161,6 @@ instance ToJSON a => ToJSON (Envelope a) where
         ]
 
 instance ToSchema a => ToSchema (Envelope a) where
-
-instance ToSample a b => ToSample (Envelope a) (Envelope b) where
-    toSample _ = Nothing
 
 -------------------------------------------------------------------------------
 -- Legacy user
@@ -207,8 +189,47 @@ instance ToSchema User where
             { Swagger.fieldLabelModifier = camelTo . drop 4
             }
 
+-------------------------------------------------------------------------------
+-- Legacy hour marking
+-------------------------------------------------------------------------------
+
+data Hour = Hour
+    { hourAbsence         :: !Bool
+    , hourBillable        :: !Bool
+    , hourDay             :: !Day
+    , hourDescription     :: !Text
+    , hourEditable        :: !Bool
+    , hourHours           :: !Double
+    , hourId              :: !PM.TimereportId
+    , hourProjectId       :: !PM.ProjectId
+    , hourProjectCategory :: !Int
+    , hourProjectName     :: !Text
+    , hourStatus          :: !Int
+    , hourTaskId          :: !PM.TaskId
+    , hourTaskName        :: !Text
+    , hourUserId          :: !PM.UserId
+    , hourUser            :: !Text
+    }
+    deriving (Eq, Ord, Read, Show, Typeable, Generic)
+
+instance ToJSON Hour where
+  toJSON = Aeson.genericToJSON opts
+      where
+        opts = Aeson.defaultOptions
+            { Aeson.fieldLabelModifier = camelTo . drop 4
+            }
+
+instance ToSchema Hour where
+    declareNamedSchema = Swagger.genericDeclareNamedSchema opts
+      where
+        opts = Swagger.defaultSchemaOptions
+            { Swagger.fieldLabelModifier = camelTo . drop 4
+            }
+
+-------------------------------------------------------------------------------
+-- Helpers
+-------------------------------------------------------------------------------
+
 camelTo :: String -> String
 camelTo = Aeson.camelTo '_'
 
-instance ToSample User User where
-    toSample _ = Nothing

@@ -11,13 +11,13 @@ module Futurice.App.FutuHours (defaultMain) where
 import Futurice.Prelude
 import Prelude          ()
 
-import Data.Pool           (createPool, withResource)
+import Data.Pool                   (createPool, withResource)
 import Network.Wai
-import Servant
-import Servant.Cache.Class (DynMapCache)
-import Servant.Futurice
-import System.IO           (hPutStrLn, stderr)
 import Network.Wai.Middleware.Cors (simpleCors)
+import Servant
+import Servant.Cache.Class         (DynMapCache)
+import Servant.Futurice
+import System.IO                   (hPutStrLn, stderr)
 
 import qualified Database.PostgreSQL.Simple    as Postgres
 import qualified Network.Wai.Handler.Warp      as Warp
@@ -28,8 +28,8 @@ import qualified Servant.Cache.Internal.DynMap as DynMap
 import Futurice.App.FutuHours.API
 import Futurice.App.FutuHours.Config          (Config (..), getConfig)
 import Futurice.App.FutuHours.Endpoints
-import Futurice.App.FutuHours.Types
 import Futurice.App.FutuHours.PlanMillUserIds (planMillUserIds)
+import Futurice.App.FutuHours.Types
 
 import Futurice.App.FutuHours.Orphans ()
 
@@ -42,11 +42,11 @@ server ctx = pure "Hello to futuhours api"
     :<|> getProjects ctx
     :<|> pure (Envelope empty)
     :<|> getLegacyUsers ctx
-    :<|> pure (Envelope empty)
+    :<|> (\un lte gte -> getLegacyHours lte gte ctx un)
 
 -- | Server with docs and cache and status
 server' :: DynMapCache -> Context -> Server FutuHoursAPI'
-server' cache ctx = futuriceApiServer cache futuhoursAPI futuhoursExtraDocs (server ctx)
+server' cache ctx = futuriceApiServer cache futuhoursAPI (server ctx)
 
 -- | Wai application
 app :: DynMapCache -> Context -> Application

@@ -1,9 +1,10 @@
 {-# LANGUAGE CPP               #-}
 {-# LANGUAGE ConstraintKinds   #-}
 {-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes        #-}
-{-# LANGUAGE RecordWildCards , FlexibleContexts  #-}
+{-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TypeOperators     #-}
 
 -- | API endpoints
@@ -15,19 +16,22 @@ module Futurice.App.FutuHours.Endpoints (
     getBalances,
     -- * Legacy endpoins
     getLegacyUsers,
+    getLegacyHours,
     ) where
 
 import Futurice.Prelude
 import Prelude          ()
 
+import Control.Monad                    (join)
 import Control.Monad.Trans.Either       (EitherT)
 import Data.List                        (nub)
 import Data.Pool                        (withResource)
+import Data.Time                        (UTCTime (..))
 import Database.PostgreSQL.Simple.Fxtra (Only (..), execute, singleQuery)
 import Generics.SOP                     (All)
 import Servant                          (ServantErr)
 
-import Servant.Server (err403, err404)
+import Servant.Server (err400, err403, err404)
 
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Text.Encoding  as TE
@@ -38,19 +42,9 @@ import Futurice.App.FutuHours.PlanMill
 import Futurice.App.FutuHours.Types
 
 -- Planmill modules
-import           Control.Monad.PlanMill         (MonadPlanMill (..))
-import qualified PlanMill                       as PM (ApiKey (..), Cfg (..),
-                                                       Identifier (..),
-                                                       PlanMill, identifier)
-import qualified PlanMill.EndPoints.Assignments as PM (ReportableAssignment (..),
-                                                       ReportableAssignments,
-                                                       reportableAssignments)
-import qualified PlanMill.EndPoints.Timereports as PM (Timereport (..),
-                                                       Timereports, timereports)
-import qualified PlanMill.EndPoints.Users       as PM (UserId, User(..), user, userTimeBalance)
-import qualified PlanMill.Types.TimeBalance     as PM (TimeBalance (..))
-
-import qualified PlanMill.Test as PM (evalPlanMillIO)
+import           Control.Monad.PlanMill (MonadPlanMill (..))
+import qualified PlanMill               as PM
+import qualified PlanMill.Test          as PM (evalPlanMillIO)
 
 -- | Add planmill api key.
 addPlanmillApiKey :: MonadIO m => Context -> FUMUsername -> PlanmillApiKey -> m ()
@@ -124,6 +118,44 @@ getLegacyUsers = withLegacyPlanmill p $ \uid -> do
   where
     p = Proxy :: Proxy '[PM.User, PM.TimeBalance]
 
+getLegacyHours
+    :: (MonadIO m, MonadError ServantErr m)
+    => Maybe Day  -- ^ Day GTE, @>=@
+    -> Maybe Day  -- ^ Day TTE, @<=@
+    -> Context -> Maybe Text -> m (Envelope Hour)
+getLegacyHours gteDay lteDay =
+    case join (PM.mkResultInterval PM.IntervalStart <$> lte <*> gte) of
+        Nothing       -> \_ _ -> throwError err400
+        Just interval -> withLegacyPlanmill p $ \uid -> do
+            let ri = interval
+            ts <- planmillAction $ PM.timereportsFromIntervalFor ri uid
+            pure $ Envelope $ fmap f ts
+  where
+    lte, gte :: Maybe UTCTime
+    lte = UTCTime <$> lteDay <*> pure 0
+    gte = UTCTime <$> gteDay <*> pure 0
+
+    p = Proxy :: Proxy '[PM.Timereports]
+
+    f :: PM.Timereport -> Hour
+    f t = Hour
+        { hourAbsence         = False
+        , hourBillable        = PM.trBillableStatus t == 1 -- TODO: use enumerations
+        , hourDay             = utctDay $ PM.trStart t
+        , hourDescription     = fromMaybe "-" $ PM.trComment t
+        , hourEditable        = False -- TODO: use status?
+        , hourHours           = PM.trAmount t / 60
+        , hourId              = t ^. PM.identifier
+        , hourProjectId       = fromMaybe (PM.Ident 0) $ PM.trProject t
+        , hourProjectCategory = 0 -- TODO
+        , hourProjectName     = "TODO: project" -- TODO
+        , hourStatus          = 0 -- TODO
+        , hourTaskId          = PM.trTask t
+        , hourTaskName        = "TODO: task" -- TODO
+        , hourUserId          = PM.trPerson t
+        , hourUser            = "someuser" -- TODO
+        }
+
 ------------------------------------------------------------------------
 -- Helpers
 ------------------------------------------------------------------------
@@ -144,7 +176,7 @@ withLegacyPlanmill
     -> m a
 withLegacyPlanmill p action ctx httpRemoteUser = do
     let mPlanMillId = do
-            fumUserName <- FUMUsername <$> (httpRemoteUser <|> pure "ogre") -- TODO: remove default case
+            fumUserName <- FUMUsername <$> httpRemoteUser
             HM.lookup fumUserName (ctxPlanmillUserLookup ctx)
     planMillId <- maybe (throwError err404) return mPlanMillId
     executeUncachedAdminPlanmill ctx p (action planMillId)
