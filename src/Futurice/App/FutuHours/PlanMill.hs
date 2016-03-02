@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE GADTs                #-}
 {-# LANGUAGE OverloadedStrings    #-}
 {-# LANGUAGE ScopedTypeVariables  #-}
 {-# LANGUAGE TemplateHaskell      #-}
@@ -28,7 +29,7 @@ import qualified Data.ByteString.Lazy             as BSL
 import qualified Data.Text                        as T
 import qualified Database.PostgreSQL.Simple.Fxtra as Postgres
 
-import qualified PlanMill               as PM (Cfg (..), PlanMill)
+import qualified PlanMill               as PM (Cfg (..), PlanMill (..))
 import qualified PlanMill.Eval          as PM (evalPlanMill)
 import qualified PlanMill.Operational   as PM (GenPlanMillT, runGenPlanMillT)
 import qualified PlanMill.Types.Request as PM (requestUrlParts)
@@ -83,8 +84,17 @@ runCachedPlanmillT conn cfg askCache pm =
                             evaledPlanMill
         else evaledPlanMill
       where
+        url' :: Text
+        url' = T.pack $ PM.fromUrlParts (PM.requestUrlParts req)
+
+        qs' :: Text
+        qs' = T.pack . show $ case req of
+            PM.PlanMillGet qs _ -> qs
+            PM.PlanMillPagedGet qs _ -> qs
+            PM.PlanMillPost _ _ -> []
+
         url :: Text
-        url = T.pack $ PM.fromUrlParts (PM.requestUrlParts req)
+        url = url' <> qs'
 
         evaledPlanMill :: InnerStack b
         evaledPlanMill = do
