@@ -1,4 +1,4 @@
--- This file has been generated from package.yaml by hpack version 0.9.0.
+-- This file has been generated from package.yaml by hpack version 0.8.0.
 --
 -- see: https://github.com/sol/hpack
 
@@ -38,6 +38,7 @@ library
     , binary-tagged
     , blaze-html
     , bytestring
+    , containers
     , either
     , exceptions
     , fum-client
@@ -81,6 +82,7 @@ library
     , wai-cors
     , warp
   exposed-modules:
+      Data.BinaryFromJSON
       Database.PostgreSQL.Simple.Fxtra
       Futurice.App.FutuHours
       Futurice.App.FutuHours.API
@@ -90,6 +92,7 @@ library
       Futurice.App.FutuHours.Orphans
       Futurice.App.FutuHours.PlanMill
       Futurice.App.FutuHours.PlanMillUserIds
+      Futurice.App.FutuHours.Reports.MissingHours
       Futurice.App.FutuHours.Types
       Servant.Futurice
   default-language: Haskell2010

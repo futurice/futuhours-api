@@ -25,6 +25,7 @@ library:
     - binary-tagged
     - blaze-html
     - bytestring
+    - containers
     - either
     - exceptions
     - fum-client

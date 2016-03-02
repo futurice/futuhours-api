@@ -10,18 +10,23 @@ module Futurice.App.FutuHours.Types (
     Project(..),
     UserId(..),
     FUMUsername(..),
+    FUMUsernamesParam(..),
     PlanmillApiKey(..),
+    PlanmillUserLookupTable,
     PlanmillUserIdLookupTable,
     Timereport(..),
     Balance(..),
     Envelope(..),
     User(..),
     Hour(..),
+    MissingHoursReport(..),
+    MissingHours(..),
     ) where
 
 import Futurice.Prelude
 import Prelude          ()
 
+import Control.Arrow    (first)
 import Data.Aeson.Extra (FromJSON, ToJSON (..), Value (..), object, (.=))
 import Data.Aeson.TH    (Options (..), defaultOptions, deriveJSON)
 import Data.Char        (toLower)
@@ -32,6 +37,7 @@ import Servant.Docs     (DocCapture (..), ToCapture (..))
 import qualified Data.Aeson.Types                     as Aeson
 import qualified Data.HashMap.Strict                  as HM
 import qualified Data.Swagger                         as Swagger
+import qualified Data.Text                            as T
 import qualified Database.PostgreSQL.Simple.FromField as Postgres
 import qualified Database.PostgreSQL.Simple.ToField   as Postgres
 import qualified PlanMill                             as PM
@@ -60,6 +66,9 @@ instance FromText UserId where
 newtype FUMUsername = FUMUsername Text
     deriving (Eq, Ord, Show, Typeable, Generic)
 
+getFUMUsername :: FUMUsername -> Text
+getFUMUsername (FUMUsername name) = name
+
 instance ToJSON FUMUsername
 instance ToSchema FUMUsername
 instance ToParamSchema FUMUsername
@@ -78,6 +87,16 @@ instance Postgres.FromField FUMUsername where
 
 instance Hashable FUMUsername
 
+-- | List of users
+newtype FUMUsernamesParam = FUMUsernamesParam
+    { getFUMUsernamesParam :: [FUMUsername] }
+
+instance FromText FUMUsernamesParam where
+    fromText = Just . FUMUsernamesParam . map FUMUsername . T.words
+
+instance ToParamSchema FUMUsernamesParam where
+    toParamSchema _ = Swagger.toParamSchema (Proxy :: Proxy Text) -- TODO: pattern
+
 -------------------------------------------------------------------------------
 -- PlanmillApiKey
 -------------------------------------------------------------------------------
@@ -95,6 +114,7 @@ instance Postgres.ToField PlanmillApiKey where
 instance Postgres.FromField PlanmillApiKey where
     fromField f bs = PlanmillApiKey <$> Postgres.fromField f bs
 
+type PlanmillUserLookupTable = HM.HashMap FUMUsername PM.User
 type PlanmillUserIdLookupTable = HM.HashMap FUMUsername PM.UserId
 
 -------------------------------------------------------------------------------
@@ -224,6 +244,42 @@ instance ToSchema Hour where
       where
         opts = Swagger.defaultSchemaOptions
             { Swagger.fieldLabelModifier = camelTo . drop 4
+            }
+
+-------------------------------------------------------------------------------
+-- Reports
+-------------------------------------------------------------------------------
+
+newtype MissingHoursReport = MissingHoursReport (HashMap FUMUsername MissingHours)
+
+instance ToJSON MissingHoursReport where
+    toJSON (MissingHoursReport mhs) = toJSON . HM.fromList . map (first getFUMUsername) . HM.toList $ mhs
+
+-- | TODO:
+instance ToSchema MissingHoursReport where
+    declareNamedSchema _ = pure $
+        Swagger.NamedSchema (Just "Missing Hours report") mempty
+
+data MissingHours = MissingHours
+   { missingHoursName     :: !Text
+   , missingHoursTeam     :: !Text
+   , missingHoursContract :: !Text
+   , missingHoursDays     :: !(Set Day)
+   }
+    deriving (Eq, Ord, Show, Typeable, Generic)
+
+instance ToJSON MissingHours where
+  toJSON = Aeson.genericToJSON opts
+      where
+        opts = Aeson.defaultOptions
+            { Aeson.fieldLabelModifier = camelTo . drop 12
+            }
+
+instance ToSchema MissingHours where
+    declareNamedSchema = Swagger.genericDeclareNamedSchema opts
+      where
+        opts = Swagger.defaultSchemaOptions
+            { Swagger.fieldLabelModifier = camelTo . drop 12
             }
 
 -------------------------------------------------------------------------------

@@ -11,7 +11,7 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-futurice-prelude.git
-    commit: 7c20c981023c9401d863b465532af1f64b8d40cb
+    commit: a1fb5f4153c590ff52a6880a17e30128b300eb75
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-monad-http.git
@@ -19,7 +19,7 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-planmill-client.git
-    commit: 613ed6af6dde0c74359d7e3e89deda8c59ba60e6
+    commit: a6ec820691842512e4cd3443585e7feb79b85d84
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-servant-cache.git
@@ -36,19 +36,40 @@ packages:
 extra-deps:
 - aeson-compat-0.3.1.0
 - aeson-extra-0.3.1.0
-- ansi-pretty-0.1.1.0
+- ansi-pretty-0.1.2.0
+- base-compat-0.9.0
+- base-orphans-0.5.3
+- base-prelude-0.1.21
+- bifunctors-5.2.1
 - binary-orphans-0.1.4.0
 - binary-tagged-0.1.3.1
 - composition-extra-2.0.0
+- conduit-extra-1.1.10.1
+- exceptions-0.8.2.1
 - file-embed-0.0.9.1
+- free-4.12.4
 - hashable-time-0.2
-- iso8601-time-0.1.4
+- hspec-2.2.2
+- hspec-core-2.2.2
+- hspec-discover-2.2.2
+- hspec-expectations-0.7.2
 - JuicyPixels-3.2.7
 - lattices-1.5.0
+- lens-4.13
 - monad-time-0.1
+- monadcryptorandom-0.7.0
+- MonadRandom-0.4.2.2
+- mtl-2.2.1
+- optparse-applicative-0.12.1.0
+- postgresql-simple-0.5.1.2
 - postgresql-simple-url-0.1.0.1
+- primitive-0.6.1.0
+- profunctors-5.2
 - recursion-schemes-4.1.2
+- reflection-2.1.2
 - regex-applicative-text-0.1.0.1
+- resourcet-1.1.7.2
+- semigroupoids-5.0.1
 - servant-0.4.4.6
 - servant-blaze-0.4.4.6
 - servant-docs-0.4.4.6
@@ -56,18 +77,20 @@ extra-deps:
 - servant-lucid-0.4.4.6
 - servant-server-0.4.4.6
 - servant-swagger-1.0.3
-- servant-yaml-0.1.0.0
 - strict-base-types-0.5.0
 - swagger2-2.0.1
 - time-parsers-0.1.0.0
+- transformers-0.4.3.0
+- transformers-compat-0.5.1.4
 - universe-base-1.0.2.1
 - universe-instances-base-1.0
 - universe-reverse-instances-1.0
+- unix-time-0.3.6
+- vector-0.11.0.0
+- vector-instances-3.3.1
 - wai-cors-0.2.4
+- wai-extra-3.0.14.1
+- yaml-0.8.12
 flags:
   hashable-time:
     old-locale: true
-  iso8601-time:
-    new-time: false
-  wai-cors:
-    transformers-3: true

@@ -11,7 +11,7 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-futurice-prelude.git
-    commit: 7c20c981023c9401d863b465532af1f64b8d40cb
+    commit: a1fb5f4153c590ff52a6880a17e30128b300eb75
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-monad-http.git
@@ -19,7 +19,7 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-planmill-client.git
-    commit: 613ed6af6dde0c74359d7e3e89deda8c59ba60e6
+    commit: a6ec820691842512e4cd3443585e7feb79b85d84
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-servant-cache.git
@@ -35,8 +35,8 @@ packages:
   extra-dep: true
 extra-deps:
 - aeson-compat-0.3.1.0
-- aeson-extra-0.3.1.0
-- ansi-pretty-0.1.1.0
+- aeson-extra-0.3.1.1
+- ansi-pretty-0.1.2.0
 - binary-orphans-0.1.4.0
 - binary-tagged-0.1.3.1
 - composition-extra-2.0.0
