@@ -38,6 +38,7 @@ server :: Context -> Server FutuHoursAPI
 server ctx = pure "Hello to futuhours api"
     :<|> addPlanmillApiKey ctx
     :<|> getBalances ctx
+    :<|> getMissingHoursReport ctx
     :<|> getTimereports ctx
     :<|> getProjects ctx
     :<|> pure (Envelope empty)

@@ -14,6 +14,8 @@ module Futurice.App.FutuHours.Endpoints (
     getProjects,
     getTimereports,
     getBalances,
+    -- * Reports
+    getMissingHoursReport,
     -- * Legacy endpoins
     getLegacyUsers,
     getLegacyHours,
@@ -24,6 +26,7 @@ import Prelude          ()
 
 import Control.Monad                    (join)
 import Control.Monad.Trans.Either       (EitherT)
+import Data.BinaryFromJSON              (BinaryFromJSON)
 import Data.List                        (nub)
 import Data.Pool                        (withResource)
 import Data.Time                        (UTCTime (..))
@@ -39,10 +42,11 @@ import qualified Data.Vector         as V
 
 import Futurice.App.FutuHours.Context
 import Futurice.App.FutuHours.PlanMill
+import Futurice.App.FutuHours.Reports.MissingHours (missingHours)
 import Futurice.App.FutuHours.Types
 
 -- Planmill modules
-import           Control.Monad.PlanMill (MonadPlanMill (..))
+import           Control.Monad.PlanMill (ForallSymbols, MonadPlanMill (..))
 import qualified PlanMill               as PM
 import qualified PlanMill.Test          as PM (evalPlanMillIO)
 
@@ -141,7 +145,7 @@ getLegacyHours gteDay lteDay =
     f t = Hour
         { hourAbsence         = False
         , hourBillable        = PM.trBillableStatus t == 1 -- TODO: use enumerations
-        , hourDay             = utctDay $ PM.trStart t
+        , hourDay             = PM.trStart t
         , hourDescription     = fromMaybe "-" $ PM.trComment t
         , hourEditable        = False -- TODO: use status?
         , hourHours           = PM.trAmount t / 60
@@ -155,6 +159,28 @@ getLegacyHours gteDay lteDay =
         , hourUserId          = PM.trPerson t
         , hourUser            = "someuser" -- TODO
         }
+
+
+-------------------------------------------------------------------------------
+-- Reports
+-------------------------------------------------------------------------------
+
+getMissingHoursReport
+    :: (MonadIO m, MonadError ServantErr m)
+    => Context
+    -> Day -> Day -> Maybe FUMUsernamesParam
+    -> m MissingHoursReport
+getMissingHoursReport ctx a b usernames =
+    case PM.mkInterval a b of
+        Nothing -> throwError err400
+        Just interval -> executeCachedAdminPlanmill ctx p $
+            missingHours (ctxPlanmillUserLookup ctx) interval usernames'
+  where
+    p = Proxy :: Proxy
+        '[PM.UserCapacities, PM.Timereports, PM.User, PM.Team, PM.Meta]
+
+    usernames' :: [FUMUsername]
+    usernames' = maybe [] getFUMUsernamesParam usernames
 
 ------------------------------------------------------------------------
 -- Helpers
@@ -192,10 +218,10 @@ executeUncachedAdminPlanmill ctx _ action =
         runCachedPlanmillT conn (ctxPlanmillCfg ctx) False action
 
 executeCachedAdminPlanmill
-    :: forall m a as. (MonadIO m, All BinaryFromJSON as)
+    :: forall m a as. (MonadIO m, All BinaryFromJSON as, ForallSymbols BinaryFromJSON PM.EnumDesc)
     => Context
     -> Proxy as
-    -> (forall n. (Applicative n, MonadPlanMill n, All (MonadPlanMillC n) as) => n a)
+    -> (forall n. (Applicative n, MonadPlanMill n, All (MonadPlanMillC n) as, ForallSymbols (MonadPlanMillC n) PM.EnumDesc) => n a)
     -> m a
 executeCachedAdminPlanmill ctx _ action =
     liftIO $ withResource (ctxPostgresPool ctx) $ \conn ->
