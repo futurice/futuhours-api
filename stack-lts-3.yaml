@@ -50,12 +50,15 @@ extra-deps:
 - recursion-schemes-4.1.2
 - regex-applicative-text-0.1.0.1
 - servant-blaze-0.4.4.6
+- servant-cassava-0.4.4.6
 - servant-JuicyPixels-0.3.0.0
 - servant-lucid-0.4.4.6
 - servant-swagger-1.0.3
 - strict-base-types-0.5.0
 - swagger2-2.0.1
 - time-parsers-0.1.0.0
+- tz-0.1.0.1
+- tzdata-0.1.20150810.0
 - universe-base-1.0.2.1
 - universe-instances-base-1.0
 - universe-reverse-instances-1.0

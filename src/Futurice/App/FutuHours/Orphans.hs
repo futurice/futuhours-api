@@ -15,6 +15,8 @@ import Data.Aeson.Compat  (Value (..))
 import Data.Swagger
 import Data.Time          (Day)
 import Data.Time.Parsers  (day)
+import Data.Csv (ToField(..))
+import Data.String (fromString)
 import PlanMill.Types     (Identifier (..))
 import Servant            (FromText (..))
 import Text.Parsec        (parse)
@@ -30,3 +32,6 @@ instance ToSchema Value where
 instance FromText Day where
     fromText t = either (const Nothing) return $
         parse day "FromText Day" t
+
+instance ToField Day where
+    toField = fromString . show

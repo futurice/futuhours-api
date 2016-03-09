@@ -12,6 +12,7 @@ import Prelude          ()
 
 import Futurice.Colour
 import Servant
+import Servant.CSV.Cassava
 import Servant.Futurice
 
 import Futurice.App.FutuHours.Orphans ()
@@ -29,6 +30,7 @@ type FutuHoursAPI = Get '[PlainText] Text
     :<|> "balances" :> Get '[JSON] (Vector Balance)
     :<|> "reports" :>
         ( "missinghours" :> Capture "from" Day :> Capture "to" Day :> QueryParam "users" FUMUsernamesParam :> Get '[JSON] MissingHoursReport
+        :<|> "missinghours-list" :> QueryParam "from" Day :> QueryParam "to" Day :> QueryParam "users" FUMUsernamesParam :> Get '[(CSV', DefaultEncodeOpts), JSON] [MissingHour]
         )
     :<|> "api" :> "v1" :> LegacyFutuhoursAPI
 

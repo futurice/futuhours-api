@@ -16,6 +16,7 @@ module Futurice.App.FutuHours.Endpoints (
     getBalances,
     -- * Reports
     getMissingHoursReport,
+    getMissingHoursReportList,
     -- * Legacy endpoins
     getLegacyUsers,
     getLegacyHours,
@@ -27,9 +28,12 @@ import Prelude          ()
 import Control.Monad                    (join)
 import Control.Monad.Trans.Either       (EitherT)
 import Data.BinaryFromJSON              (BinaryFromJSON)
-import Data.List                        (nub)
+import Data.List                        (nub, sortBy)
+import Data.Ord                         (comparing)
 import Data.Pool                        (withResource)
 import Data.Time                        (UTCTime (..))
+import Data.Time.Fxtra                  (beginningOfPrevMonth,
+                                         getCurrentDayInFinland)
 import Database.PostgreSQL.Simple.Fxtra (Only (..), execute, singleQuery)
 import Generics.SOP                     (All)
 import Servant                          (ServantErr)
@@ -181,6 +185,25 @@ getMissingHoursReport ctx a b usernames =
 
     usernames' :: [FUMUsername]
     usernames' = maybe [] getFUMUsernamesParam usernames
+
+getMissingHoursReportList
+    :: (Applicative m, MonadIO m, MonadError ServantErr m)
+    => Context
+    -> Maybe Day -> Maybe Day -> Maybe FUMUsernamesParam
+    -> m [MissingHour]
+getMissingHoursReportList ctx a b usernames = do
+    b' <- maybe getCurrentDayInFinland pure b
+    let a' = fromMaybe (beginningOfPrevMonth b') a
+    liftIO $ print (a', b')
+    r <- getMissingHoursReport ctx a' b' usernames
+    pure
+        . concatMap (f . snd)
+        . sortBy (comparing fst)
+        . HM.toList
+        . unMissingHoursReport
+        $ r
+  where
+    f (MissingHours n t c ds) = MissingHour n t c <$> toList ds
 
 ------------------------------------------------------------------------
 -- Helpers
