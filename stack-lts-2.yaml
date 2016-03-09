@@ -33,9 +33,13 @@ packages:
     git: https://github.com/phadej/servant-swagger-ui.git
     commit: 445364492f7fb9b7d9a1294d4ae8c1c8cdc3fb11
   extra-dep: true
+- location:
+    git: https://github.com/phadej/generics-sop-lens.git
+    commit: 695f1d3af1c8109841ba3c65056ddeb4b4c172a3
+  extra-dep: true
 extra-deps:
 - aeson-compat-0.3.1.0
-- aeson-extra-0.3.1.0
+- aeson-extra-0.3.1.1
 - ansi-pretty-0.1.2.0
 - base-compat-0.9.0
 - base-orphans-0.5.3
@@ -45,10 +49,11 @@ extra-deps:
 - binary-tagged-0.1.3.1
 - cassava-0.4.5.0
 - composition-extra-2.0.0
-- conduit-extra-1.1.10.1
+- conduit-extra-1.1.11
 - exceptions-0.8.2.1
 - file-embed-0.0.9.1
 - free-4.12.4
+- generics-sop-0.2.1.0
 - hashable-time-0.2
 - hspec-2.2.2
 - hspec-core-2.2.2
@@ -66,18 +71,20 @@ extra-deps:
 - postgresql-simple-url-0.1.0.1
 - primitive-0.6.1.0
 - profunctors-5.2
+- QuickCheck-2.8.2
+- quickcheck-instances-0.3.12
 - recursion-schemes-4.1.2
 - reflection-2.1.2
 - regex-applicative-text-0.1.0.1
-- resourcet-1.1.7.2
+- resourcet-1.1.7.3
 - semigroupoids-5.0.1
 - servant-0.4.4.6
 - servant-blaze-0.4.4.6
+- servant-cassava-0.4.4.6
 - servant-docs-0.4.4.6
 - servant-JuicyPixels-0.3.0.0
 - servant-lucid-0.4.4.6
 - servant-server-0.4.4.6
-- servant-cassava-0.4.4.6
 - servant-swagger-1.0.3
 - strict-base-types-0.5.0
 - swagger2-2.0.1
@@ -96,5 +103,7 @@ extra-deps:
 - wai-extra-3.0.14.1
 - yaml-0.8.12
 flags:
+  QuickCheck:
+    base4point8: false
   hashable-time:
     old-locale: true

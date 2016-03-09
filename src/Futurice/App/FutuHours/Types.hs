@@ -5,6 +5,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE UndecidableInstances  #-}
 module Futurice.App.FutuHours.Types (
     Project(..),
@@ -30,14 +31,16 @@ module Futurice.App.FutuHours.Types (
 import Futurice.Prelude
 import Prelude          ()
 
-import Control.Arrow    (first)
-import Data.Aeson.Extra (FromJSON, ToJSON (..), Value (..), object, (.=))
-import Data.Aeson.TH    (Options (..), defaultOptions, deriveJSON)
-import Data.Char        (toLower)
-import Data.Csv         (DefaultOrdered, ToNamedRecord)
-import Data.Swagger     (ToParamSchema, ToSchema (..))
-import Servant          (Capture, FromText (..))
-import Servant.Docs     (DocCapture (..), ToCapture (..))
+import Control.Arrow     (first)
+import Data.Aeson.Extra  (FromJSON, ToJSON (..), Value (..), object, (.=))
+import Data.Aeson.TH     (Options (..), defaultOptions, deriveJSON)
+import Data.Char         (toLower)
+import Data.Csv          (DefaultOrdered (..), ToNamedRecord (..))
+import Data.Swagger      (ToParamSchema, ToSchema (..))
+import Futurice.Generics (sopDeclareNamedSchema, sopHeaderOrder, sopToJSON,
+                          sopToNamedRecord)
+import Servant           (Capture, FromText (..))
+import Servant.Docs      (DocCapture (..), ToCapture (..))
 
 import qualified Data.Aeson                           as Aeson
 import qualified Data.Aeson.Types                     as Aeson
@@ -49,6 +52,13 @@ import qualified Database.PostgreSQL.Simple.ToField   as Postgres
 import qualified PlanMill                             as PM
 
 import Futurice.App.FutuHours.Orphans ()
+
+-------------------------------------------------------------------------------
+-- Helpers
+-------------------------------------------------------------------------------
+
+camelTo :: String -> String
+camelTo = Aeson.camelTo '_'
 
 -------------------------------------------------------------------------------
 -- UserId - deprecated
@@ -293,35 +303,16 @@ instance ToSchema MissingHours where
             }
 
 data MissingHour = MissingHour
-    { missingHourName :: !Text
-    , missingHourTeam :: !Text
+    { missingHourName     :: !Text
+    , missingHourTeam     :: !Text
     , missingHourContract :: !Text
-    , missingHourDay  :: !Day
+    , missingHourDay      :: !Day
     }
     deriving (Eq, Ord, Show, Typeable, Generic)
 
-instance DefaultOrdered MissingHour
-instance ToNamedRecord MissingHour
+deriveGeneric ''MissingHour
 
-instance ToJSON MissingHour where
-  toJSON = Aeson.genericToJSON opts
-      where
-        opts = Aeson.defaultOptions
-            { Aeson.fieldLabelModifier = camelTo . drop 11
-            }
-
-instance ToSchema MissingHour where
-    declareNamedSchema = Swagger.genericDeclareNamedSchema opts
-      where
-        opts = Swagger.defaultSchemaOptions
-            { Swagger.fieldLabelModifier = camelTo . drop 11
-            }
-
-
--------------------------------------------------------------------------------
--- Helpers
--------------------------------------------------------------------------------
-
-camelTo :: String -> String
-camelTo = Aeson.camelTo '_'
-
+instance DefaultOrdered MissingHour where headerOrder = sopHeaderOrder
+instance ToNamedRecord MissingHour where toNamedRecord = sopToNamedRecord
+instance ToJSON MissingHour where toJSON = sopToJSON
+instance ToSchema MissingHour where declareNamedSchema = sopDeclareNamedSchema
