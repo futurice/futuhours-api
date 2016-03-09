@@ -38,6 +38,7 @@ library
     , binary-tagged
     , blaze-html
     , bytestring
+    , cassava
     , containers
     , either
     , exceptions
@@ -65,6 +66,7 @@ library
     , servant
     , servant-blaze
     , servant-cache
+    , servant-cassava
     , servant-docs
     , servant-server
     , servant-status
@@ -76,6 +78,7 @@ library
     , text
     , time
     , transformers
+    , tz
     , unordered-containers
     , vector
     , wai
@@ -83,6 +86,7 @@ library
     , warp
   exposed-modules:
       Data.BinaryFromJSON
+      Data.Time.Fxtra
       Database.PostgreSQL.Simple.Fxtra
       Futurice.App.FutuHours
       Futurice.App.FutuHours.API

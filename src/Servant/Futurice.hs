@@ -7,6 +7,7 @@ module Servant.Futurice (
     FuturiceAPI,
     futuriceApiServer,
     SwaggerSchemaEndpoint,
+    swaggerDoc,
     ) where
 
 import Futurice.Prelude

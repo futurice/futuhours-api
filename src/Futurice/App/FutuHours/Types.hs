@@ -19,8 +19,12 @@ module Futurice.App.FutuHours.Types (
     Envelope(..),
     User(..),
     Hour(..),
+    -- * Reports
+    -- ** Missing hours
     MissingHoursReport(..),
+    unMissingHoursReport,
     MissingHours(..),
+    MissingHour(..),
     ) where
 
 import Futurice.Prelude
@@ -30,10 +34,12 @@ import Control.Arrow    (first)
 import Data.Aeson.Extra (FromJSON, ToJSON (..), Value (..), object, (.=))
 import Data.Aeson.TH    (Options (..), defaultOptions, deriveJSON)
 import Data.Char        (toLower)
+import Data.Csv         (DefaultOrdered, ToNamedRecord)
 import Data.Swagger     (ToParamSchema, ToSchema (..))
 import Servant          (Capture, FromText (..))
 import Servant.Docs     (DocCapture (..), ToCapture (..))
 
+import qualified Data.Aeson                           as Aeson
 import qualified Data.Aeson.Types                     as Aeson
 import qualified Data.HashMap.Strict                  as HM
 import qualified Data.Swagger                         as Swagger
@@ -252,6 +258,10 @@ instance ToSchema Hour where
 
 newtype MissingHoursReport = MissingHoursReport (HashMap FUMUsername MissingHours)
 
+-- | TODO: rename to @getMissingHoursReport@ or so.
+unMissingHoursReport :: MissingHoursReport -> HashMap FUMUsername MissingHours
+unMissingHoursReport (MissingHoursReport r) = r
+
 instance ToJSON MissingHoursReport where
     toJSON (MissingHoursReport mhs) = toJSON . HM.fromList . map (first getFUMUsername) . HM.toList $ mhs
 
@@ -281,6 +291,32 @@ instance ToSchema MissingHours where
         opts = Swagger.defaultSchemaOptions
             { Swagger.fieldLabelModifier = camelTo . drop 12
             }
+
+data MissingHour = MissingHour
+    { missingHourName :: !Text
+    , missingHourTeam :: !Text
+    , missingHourContract :: !Text
+    , missingHourDay  :: !Day
+    }
+    deriving (Eq, Ord, Show, Typeable, Generic)
+
+instance DefaultOrdered MissingHour
+instance ToNamedRecord MissingHour
+
+instance ToJSON MissingHour where
+  toJSON = Aeson.genericToJSON opts
+      where
+        opts = Aeson.defaultOptions
+            { Aeson.fieldLabelModifier = camelTo . drop 11
+            }
+
+instance ToSchema MissingHour where
+    declareNamedSchema = Swagger.genericDeclareNamedSchema opts
+      where
+        opts = Swagger.defaultSchemaOptions
+            { Swagger.fieldLabelModifier = camelTo . drop 11
+            }
+
 
 -------------------------------------------------------------------------------
 -- Helpers
