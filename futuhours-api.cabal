@@ -1,4 +1,4 @@
--- This file has been generated from package.yaml by hpack version 0.8.0.
+-- This file has been generated from package.yaml by hpack version 0.9.0.
 --
 -- see: https://github.com/sol/hpack
 
@@ -45,7 +45,8 @@ library
     , fum-client
     , futulogo
     , futurice-prelude
-    , generics-sop
+    , generics-sop >=0.2.1.0 && <0.3
+    , generics-sop-lens >=0.1.0.0 && <0.2
     , hashable
     , http-client
     , http-client-tls
@@ -60,6 +61,8 @@ library
     , planmill-client
     , postgresql-simple
     , postgresql-simple-url
+    , QuickCheck
+    , quickcheck-instances
     , regex-applicative-text
     , resource-pool
     , semigroups
@@ -73,10 +76,10 @@ library
     , servant-swagger
     , servant-swagger-ui
     , stm
-    , time-parsers
     , swagger2
     , text
     , time
+    , time-parsers
     , transformers
     , tz
     , unordered-containers
@@ -98,6 +101,7 @@ library
       Futurice.App.FutuHours.PlanMillUserIds
       Futurice.App.FutuHours.Reports.MissingHours
       Futurice.App.FutuHours.Types
+      Futurice.Generics
       Servant.Futurice
   default-language: Haskell2010
 
