@@ -10,12 +10,13 @@ module Futurice.App.FutuHours.Reports.MissingHours (missingHours) where
 import Futurice.Prelude
 import Prelude          ()
 
+import Data.Aeson.Extra              (M (..))
 import Data.Constraint.ForallSymbols (ForallSymbols)
 import Data.Maybe                    (fromJust, mapMaybe)
 import Data.Time                     (UTCTime (..))
 
 import qualified Data.HashMap.Strict as HM
-import qualified Data.Set            as Set
+import qualified Data.Map            as Map
 import qualified PlanMill            as PM
 
 import Futurice.App.FutuHours.Types
@@ -63,27 +64,33 @@ missingHours pmUsers interval usernames
             { missingHoursName     = PM.uFirstName u <> " " <> PM.uLastName u
             , missingHoursTeam     = maybe "Unknown Team" PM.tName t
             , missingHoursContract = c
-            , missingHoursDays     = uc' `Set.difference` tr'
+            , missingHoursDays     = M (Map.differenceWith minus uc' tr')
             }
 
-    capacities :: PM.UserCapacities -> Set Day
+    -- For now show only days without any hour markings
+    minus :: Double -> Double -> Maybe Double
+    minus a b
+        | b > 0      = Nothing
+        | otherwise  = Just a
+
+    capacities :: PM.UserCapacities -> Map Day Double
     capacities
-        = Set.fromList
-        . map PM.userCapacityDate
-        . filter (isPositive . PM.userCapacityAmount)
+        = Map.fromList
+        . filter (isPositive . snd)
+        . map (\x -> (PM.userCapacityDate x, fromIntegral (PM.userCapacityAmount x) / 60.0))
         . toList
 
-    reportedDays :: PM.Timereports -> Set Day
+    reportedDays :: PM.Timereports -> Map Day Double
     reportedDays
-        = Set.fromList
-        . map PM.trStart
+        = Map.fromList
+        . map (\x -> (PM.trStart x, PM.trAmount x / 60.0))
         . toList
 
     g :: FUMUsername -> Maybe (FUMUsername, PM.UserId)
     g n = (,) n <$> HM.lookup n pmUsers
 
 isPositive :: (Num a, Ord a) => a -> Bool
-isPositive = (>10)
+isPositive = (>0)
 
 splitTimereportsFromIntervalFor
     :: forall m. (PM.MonadPlanMill m, PM.MonadPlanMillC m PM.Timereports)

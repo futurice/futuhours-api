@@ -27,6 +27,7 @@ import Prelude          ()
 
 import Control.Monad                    (join)
 import Control.Monad.Trans.Either       (EitherT)
+import Data.Aeson.Extra                 (M (..))
 import Data.BinaryFromJSON              (BinaryFromJSON)
 import Data.List                        (nub, sortBy)
 import Data.Ord                         (comparing)
@@ -41,6 +42,7 @@ import Servant                          (ServantErr)
 import Servant.Server (err400, err403, err404)
 
 import qualified Data.HashMap.Strict as HM
+import qualified Data.Map            as Map
 import qualified Data.Text.Encoding  as TE
 import qualified Data.Vector         as V
 
@@ -194,7 +196,6 @@ getMissingHoursReportList
 getMissingHoursReportList ctx a b usernames = do
     b' <- maybe getCurrentDayInFinland pure b
     let a' = fromMaybe (beginningOfPrevMonth b') a
-    liftIO $ print (a', b')
     r <- getMissingHoursReport ctx a' b' usernames
     pure
         . concatMap (f . snd)
@@ -203,7 +204,7 @@ getMissingHoursReportList ctx a b usernames = do
         . unMissingHoursReport
         $ r
   where
-    f (MissingHours n t c ds) = MissingHour n t c <$> toList ds
+    f (MissingHours n t c ds) = uncurry (MissingHour n t c) <$> Map.toList (getMap ds)
 
 ------------------------------------------------------------------------
 -- Helpers

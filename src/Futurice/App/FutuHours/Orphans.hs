@@ -8,15 +8,14 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Futurice.App.FutuHours.Orphans () where
 
-import Prelude        ()
-import Prelude.Compat
+import Futurice.Prelude
+import Prelude          ()
 
 import Data.Aeson.Compat  (Value (..))
+import Data.Aeson.Extra   (M (..), ToJSONKey (..))
+import Data.Csv           (ToField (..))
 import Data.Swagger
-import Data.Time          (Day)
 import Data.Time.Parsers  (day)
-import Data.Csv (ToField(..))
-import Data.String (fromString)
 import PlanMill.Types     (Identifier (..))
 import Servant            (FromText (..))
 import Text.Parsec        (parse)
@@ -35,3 +34,9 @@ instance FromText Day where
 
 instance ToField Day where
     toField = fromString . show
+
+instance ToJSONKey Day where
+    toJSONKey a = show a ^. packed
+
+instance ToSchema v => ToSchema (M (Map k v)) where
+    declareNamedSchema _ = declareNamedSchema (Proxy :: Proxy (Map String v))
