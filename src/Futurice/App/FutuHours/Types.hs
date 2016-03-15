@@ -32,7 +32,7 @@ import Futurice.Prelude
 import Prelude          ()
 
 import Control.Arrow     (first)
-import Data.Aeson.Extra  (FromJSON, ToJSON (..), Value (..), object, (.=))
+import Data.Aeson.Extra  (M, FromJSON, ToJSON (..), Value (..), object, (.=))
 import Data.Aeson.TH     (Options (..), defaultOptions, deriveJSON)
 import Data.Char         (toLower)
 import Data.Csv          (DefaultOrdered (..), ToNamedRecord (..))
@@ -267,6 +267,7 @@ instance ToSchema Hour where
 -------------------------------------------------------------------------------
 
 newtype MissingHoursReport = MissingHoursReport (HashMap FUMUsername MissingHours)
+    deriving (Show)
 
 -- | TODO: rename to @getMissingHoursReport@ or so.
 unMissingHoursReport :: MissingHoursReport -> HashMap FUMUsername MissingHours
@@ -284,7 +285,7 @@ data MissingHours = MissingHours
    { missingHoursName     :: !Text
    , missingHoursTeam     :: !Text
    , missingHoursContract :: !Text
-   , missingHoursDays     :: !(Set Day)
+   , missingHoursDays     :: !(M (Map Day Double)) -- Hours per day
    }
     deriving (Eq, Ord, Show, Typeable, Generic)
 
@@ -307,6 +308,7 @@ data MissingHour = MissingHour
     , missingHourTeam     :: !Text
     , missingHourContract :: !Text
     , missingHourDay      :: !Day
+    , missingHourHours    :: !Double
     }
     deriving (Eq, Ord, Show, Typeable, Generic)
 
