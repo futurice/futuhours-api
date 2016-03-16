@@ -43,6 +43,7 @@ server ctx = pure "Hello to futuhours api"
         :<|> getMissingHoursReportList ctx
         )
     :<|> (getPowerUsers ctx
+        :<|> getPowerAbsences ctx
         )
     :<|> getTimereports ctx
     :<|> getProjects ctx

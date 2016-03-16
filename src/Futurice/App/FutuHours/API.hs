@@ -34,6 +34,7 @@ type FutuHoursAPI = Get '[PlainText] Text
         )
     :<|> "power" :>
         ( "users" :> Get '[JSON] (Vector PowerUser)
+        :<|> "absences" :> QueryParam "from" Day :> QueryParam "to" Day :> Get '[JSON] (Vector PowerAbsence)
         )
     :<|> "api" :> "v1" :> LegacyFutuhoursAPI
 

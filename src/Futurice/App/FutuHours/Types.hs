@@ -28,6 +28,9 @@ module Futurice.App.FutuHours.Types (
     MissingHour(..),
     -- * Power
     PowerUser(..),
+    PowerAbsence(..),
+    -- * Random
+    reverseLookup,
     ) where
 
 import Futurice.Prelude
@@ -37,7 +40,7 @@ import Control.Arrow     (first)
 import Data.Aeson.Extra  (M, FromJSON, ToJSON (..), Value (..), object, (.=))
 import Data.Aeson.TH     (Options (..), defaultOptions, deriveJSON)
 import Data.Char         (toLower)
-import Data.Csv          (DefaultOrdered (..), ToNamedRecord (..))
+import Data.Csv          (DefaultOrdered (..), ToNamedRecord (..), ToField(..))
 import Data.Swagger      (ToParamSchema, ToSchema (..))
 import Futurice.Generics (sopDeclareNamedSchema, sopHeaderOrder, sopToJSON,
                           sopToNamedRecord)
@@ -105,6 +108,9 @@ instance Postgres.FromField FUMUsername where
 
 instance Hashable FUMUsername
 
+instance ToField FUMUsername where
+    toField = toField.  getFUMUsername
+
 -- | List of users
 newtype FUMUsernamesParam = FUMUsernamesParam
     { getFUMUsernamesParam :: [FUMUsername] }
@@ -134,6 +140,12 @@ instance Postgres.FromField PlanmillApiKey where
 
 type PlanmillUserLookupTable = HM.HashMap FUMUsername PM.User
 type PlanmillUserIdLookupTable = HM.HashMap FUMUsername PM.UserId
+
+reverseLookup :: (Eq v, Hashable v) => v -> HM.HashMap k v -> Maybe k
+reverseLookup pid hm = HM.lookup pid revHm
+  where
+    revHm = HM.fromList . map swap . HM.toList $ hm
+    swap (a, b) = (b, a)
 
 -------------------------------------------------------------------------------
 -- Timereport
@@ -339,3 +351,18 @@ instance DefaultOrdered PowerUser where headerOrder = sopHeaderOrder
 instance ToNamedRecord PowerUser where toNamedRecord = sopToNamedRecord
 instance ToJSON PowerUser where toJSON = sopToJSON
 instance ToSchema PowerUser where declareNamedSchema = sopDeclareNamedSchema
+
+data PowerAbsence = PowerAbsence
+    { powerAbsenceUsername   :: !(Maybe FUMUsername)
+    , powerAbsenceStart      :: !Day
+    , powerAbsenceEnd        :: !Day
+    , powerAbsencePlanmillId :: !PM.AbsenceId
+    }
+    deriving (Eq, Ord, Show, Typeable, Generic)
+
+deriveGeneric ''PowerAbsence
+
+instance DefaultOrdered PowerAbsence where headerOrder = sopHeaderOrder
+instance ToNamedRecord PowerAbsence where toNamedRecord = sopToNamedRecord
+instance ToJSON PowerAbsence where toJSON = sopToJSON
+instance ToSchema PowerAbsence where declareNamedSchema = sopDeclareNamedSchema

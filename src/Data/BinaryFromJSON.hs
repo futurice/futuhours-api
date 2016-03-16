@@ -38,6 +38,7 @@ data PlanMillTypeRep
     | PMTimereport
     | PMUser
     | PMUserCapacity
+    | PMAbsence
     -- That's why!
     | PMEnumDesc String
     -- Special
@@ -50,6 +51,7 @@ instance PlanMillTypeable PM.TimeBalance where planmillTypeRep _ = PMTimeBalance
 instance PlanMillTypeable PM.Timereport where planmillTypeRep _ = PMTimereport
 instance PlanMillTypeable PM.User where planmillTypeRep _ = PMUser
 instance PlanMillTypeable PM.UserCapacity where planmillTypeRep _ = PMUserCapacity
+instance PlanMillTypeable PM.Absence where planmillTypeRep _ = PMAbsence
 
 instance KnownSymbol sym => PlanMillTypeable (PM.EnumDesc sym) where
     planmillTypeRep _ = PMEnumDesc (symbolVal (Proxy :: Proxy sym))
