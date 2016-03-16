@@ -19,7 +19,7 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-planmill-client.git
-    commit: a6ec820691842512e4cd3443585e7feb79b85d84
+    commit: 01f56919aed5956fb64e7a5f13bbf8411b2deb0e
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-servant-cache.git
@@ -30,12 +30,12 @@ packages:
     commit: 655edd38563d3923a83c048cc5c894c1ab9b33d7
   extra-dep: true
 - location:
-    git: https://github.com/phadej/servant-swagger-ui.git
-    commit: 445364492f7fb9b7d9a1294d4ae8c1c8cdc3fb11
-  extra-dep: true
-- location:
     git: https://github.com/phadej/generics-sop-lens.git
     commit: 695f1d3af1c8109841ba3c65056ddeb4b4c172a3
+  extra-dep: true
+- location:
+    git: https://github.com/phadej/servant-swagger-ui.git
+    commit: 445364492f7fb9b7d9a1294d4ae8c1c8cdc3fb11
   extra-dep: true
 extra-deps:
 - aeson-compat-0.3.1.0

@@ -19,6 +19,7 @@ module Futurice.App.FutuHours.Endpoints (
     getMissingHoursReportList,
     -- * Power
     getPowerUsers,
+    getPowerAbsences,
     -- * Legacy endpoins
     getLegacyUsers,
     getLegacyHours,
@@ -32,9 +33,10 @@ import Control.Monad.Trans.Either       (EitherT)
 import Data.Aeson.Extra                 (M (..))
 import Data.BinaryFromJSON              (BinaryFromJSON)
 import Data.List                        (nub, sortBy)
+import Data.Maybe                       (fromJust)
 import Data.Ord                         (comparing)
 import Data.Pool                        (withResource)
-import Data.Time                        (UTCTime (..))
+import Data.Time                        (UTCTime (..), addDays)
 import Data.Time.Fxtra                  (beginningOfPrevMonth,
                                          getCurrentDayInFinland)
 import Database.PostgreSQL.Simple.Fxtra (Only (..), execute, singleQuery)
@@ -212,7 +214,7 @@ getMissingHoursReportList ctx a b usernames = do
 -- Power
 -------------------------------------------------------------------------------
 
-getPowerUsers :: (Applicative m, MonadIO m) => Context -> m (Vector PowerUser)
+getPowerUsers :: MonadIO m => Context -> m (Vector PowerUser)
 getPowerUsers ctx = executeCachedAdminPlanmill ctx p $ traverse powerUser pmUsers
   where
     p = Proxy :: Proxy '[PM.User, PM.Team]
@@ -232,6 +234,37 @@ getPowerUsers ctx = executeCachedAdminPlanmill ctx p $ traverse powerUser pmUser
             , powerUserTeam  = maybe "Unknown Team" PM.tName t
             , powerUserStart = utctDay <$> PM.uHireDate u
             }
+
+getPowerAbsences
+    :: (Applicative m, MonadIO m, MonadError ServantErr m)
+    => Context -> Maybe Day -> Maybe Day -> m (Vector PowerAbsence)
+getPowerAbsences ctx a b = do
+    b' <- maybe (addDays 365 <$> getCurrentDayInFinland) pure b
+    let a' = fromMaybe (addDays (-365) $ beginningOfPrevMonth b') a
+    interval <- maybe (throwError err400) pure $ PM.mkInterval a' b'
+    executeCachedAdminPlanmill ctx p $ getPowerAbsences' interval
+ where
+    p = Proxy :: Proxy '[PM.Absences]
+
+    getPowerAbsences'
+        :: (Applicative n, PM.MonadPlanMill n, PM.MonadPlanMillC n PM.Absences)
+        => PM.Interval Day
+        -> n (Vector PowerAbsence)
+    getPowerAbsences' interval =
+        toPowerAbsence <$$>
+            PM.planmillAction (PM.absencesFromInterval (toResultInterval interval))
+
+    toPowerAbsence :: PM.Absence -> PowerAbsence
+    toPowerAbsence ab = PowerAbsence
+        { powerAbsenceUsername   = reverseLookup (PM.absencePerson ab) (ctxPlanmillUserLookup ctx)
+        , powerAbsenceStart      = utctDay $ PM.absenceStart ab
+        , powerAbsenceEnd        = utctDay $ PM.absenceFinish ab
+        , powerAbsencePlanmillId = ab ^. PM.identifier
+        }
+
+toResultInterval :: PM.Interval Day -> PM.ResultInterval
+toResultInterval i = fromJust $ flip PM.elimInterval i $ \a b ->
+    PM.mkResultInterval PM.IntervalStart (UTCTime a 0) (UTCTime b 0)
 
 -------------------------------------------------------------------------------
 -- Helpers

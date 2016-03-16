@@ -40,3 +40,6 @@ instance ToJSONKey Day where
 
 instance ToSchema v => ToSchema (M (Map k v)) where
     declareNamedSchema _ = declareNamedSchema (Proxy :: Proxy (Map String v))
+
+instance ToField (Identifier a) where
+    toField (Ident x) = toField x
