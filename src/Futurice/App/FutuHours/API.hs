@@ -32,6 +32,9 @@ type FutuHoursAPI = Get '[PlainText] Text
         ( "missinghours" :> Capture "from" Day :> Capture "to" Day :> QueryParam "users" FUMUsernamesParam :> Get '[JSON] MissingHoursReport
         :<|> "missinghours-list" :> QueryParam "from" Day :> QueryParam "to" Day :> QueryParam "users" FUMUsernamesParam :> Get '[(CSV', DefaultEncodeOpts), JSON] [MissingHour]
         )
+    :<|> "power" :>
+        ( "users" :> Get '[JSON] (Vector PowerUser)
+        )
     :<|> "api" :> "v1" :> LegacyFutuhoursAPI
 
 futuhoursAPI :: Proxy FutuHoursAPI

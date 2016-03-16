@@ -26,6 +26,8 @@ module Futurice.App.FutuHours.Types (
     unMissingHoursReport,
     MissingHours(..),
     MissingHour(..),
+    -- * Power
+    PowerUser(..),
     ) where
 
 import Futurice.Prelude
@@ -318,3 +320,22 @@ instance DefaultOrdered MissingHour where headerOrder = sopHeaderOrder
 instance ToNamedRecord MissingHour where toNamedRecord = sopToNamedRecord
 instance ToJSON MissingHour where toJSON = sopToJSON
 instance ToSchema MissingHour where declareNamedSchema = sopDeclareNamedSchema
+
+-------------------------------------------------------------------------------
+-- Power
+-------------------------------------------------------------------------------
+
+data PowerUser = PowerUser
+    { powerUserFirst :: !Text
+    , powerUserLast  :: !Text
+    , powerUserTeam  :: !Text
+    , powerUserStart :: !(Maybe Day)
+    }
+    deriving (Eq, Ord, Show, Typeable, Generic)
+
+deriveGeneric ''PowerUser
+
+instance DefaultOrdered PowerUser where headerOrder = sopHeaderOrder
+instance ToNamedRecord PowerUser where toNamedRecord = sopToNamedRecord
+instance ToJSON PowerUser where toJSON = sopToJSON
+instance ToSchema PowerUser where declareNamedSchema = sopDeclareNamedSchema
