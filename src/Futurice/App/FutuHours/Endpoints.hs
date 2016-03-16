@@ -17,6 +17,8 @@ module Futurice.App.FutuHours.Endpoints (
     -- * Reports
     getMissingHoursReport,
     getMissingHoursReportList,
+    -- * Power
+    getPowerUsers,
     -- * Legacy endpoins
     getLegacyUsers,
     getLegacyHours,
@@ -206,9 +208,34 @@ getMissingHoursReportList ctx a b usernames = do
   where
     f (MissingHours n t c ds) = uncurry (MissingHour n t c) <$> Map.toList (getMap ds)
 
-------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+-- Power
+-------------------------------------------------------------------------------
+
+getPowerUsers :: (Applicative m, MonadIO m) => Context -> m (Vector PowerUser)
+getPowerUsers ctx = executeCachedAdminPlanmill ctx p $ traverse powerUser pmUsers
+  where
+    p = Proxy :: Proxy '[PM.User, PM.Team]
+    pmUsers = V.fromList $ HM.elems $ ctxPlanmillUserLookup ctx
+
+    powerUser
+        :: ( Applicative n, PM.MonadPlanMill n
+           , PM.MonadPlanMillC n PM.User, PM.MonadPlanMillC n PM.Team
+           )
+        => PM.UserId -> n PowerUser
+    powerUser uid = do
+        u <- PM.planmillAction $ PM.user uid
+        t <- traverse (PM.planmillAction . PM.team) (PM.uTeam u)
+        return $ PowerUser
+            { powerUserFirst = PM.uFirstName u
+            , powerUserLast  = PM.uLastName u
+            , powerUserTeam  = maybe "Unknown Team" PM.tName t
+            , powerUserStart = utctDay <$> PM.uHireDate u
+            }
+
+-------------------------------------------------------------------------------
 -- Helpers
-------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
 withPlanmillCfg :: (PM.Cfg -> IO a) -> Context -> FUMUsername -> EitherT ServantErr IO a
 withPlanmillCfg action ctx username =do

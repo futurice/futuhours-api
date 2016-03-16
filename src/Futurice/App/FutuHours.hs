@@ -6,6 +6,7 @@
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
+{-# OPTIONS_GHC -fcontext-stack=30 #-}
 module Futurice.App.FutuHours (defaultMain) where
 
 import Futurice.Prelude
@@ -40,6 +41,8 @@ server ctx = pure "Hello to futuhours api"
     :<|> getBalances ctx
     :<|> (getMissingHoursReport ctx
         :<|> getMissingHoursReportList ctx
+        )
+    :<|> (getPowerUsers ctx
         )
     :<|> getTimereports ctx
     :<|> getProjects ctx
