@@ -1,4 +1,4 @@
--- This file has been generated from package.yaml by hpack version 0.9.0.
+-- This file has been generated from package.yaml by hpack version 0.8.0.
 --
 -- see: https://github.com/sol/hpack
 
@@ -40,6 +40,8 @@ library
     , bytestring
     , cassava
     , containers
+    , dependent-map
+    , dependent-sum
     , either
     , exceptions
     , fum-client
@@ -91,6 +93,7 @@ library
       Data.BinaryFromJSON
       Data.Time.Fxtra
       Database.PostgreSQL.Simple.Fxtra
+      Distribution.Server.Framework.Cron
       Futurice.App.FutuHours
       Futurice.App.FutuHours.API
       Futurice.App.FutuHours.Config
@@ -99,9 +102,11 @@ library
       Futurice.App.FutuHours.Orphans
       Futurice.App.FutuHours.PlanMill
       Futurice.App.FutuHours.PlanMillUserIds
+      Futurice.App.FutuHours.Precalc
       Futurice.App.FutuHours.Reports.MissingHours
       Futurice.App.FutuHours.Types
       Futurice.Generics
+      Generics.SOP.Curry
       Servant.Futurice
   default-language: Haskell2010
 

@@ -42,6 +42,7 @@ extra-deps:
 - aeson-extra-0.3.1.1
 - ansi-pretty-0.1.2.0
 - base-compat-0.9.0
+- JuicyPixels-3.2.7
 - base-orphans-0.5.3
 - base-prelude-0.1.21
 - bifunctors-5.2.1
@@ -50,6 +51,8 @@ extra-deps:
 - cassava-0.4.5.0
 - composition-extra-2.0.0
 - conduit-extra-1.1.11
+- dependent-map-0.2.1.0
+- dependent-sum-0.3.2.1
 - exceptions-0.8.2.1
 - file-embed-0.0.9.1
 - free-4.12.4
@@ -59,7 +62,6 @@ extra-deps:
 - hspec-core-2.2.2
 - hspec-discover-2.2.2
 - hspec-expectations-0.7.2
-- JuicyPixels-3.2.7
 - lattices-1.5.0
 - lens-4.13
 - monad-time-0.1

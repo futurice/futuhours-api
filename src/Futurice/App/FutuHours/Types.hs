@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE TemplateHaskell       #-}
@@ -29,6 +30,8 @@ module Futurice.App.FutuHours.Types (
     -- * Power
     PowerUser(..),
     PowerAbsence(..),
+    -- * Precalculated endpoints
+    EndpointTag(..),
     -- * Random
     reverseLookup,
     ) where
@@ -37,10 +40,11 @@ import Futurice.Prelude
 import Prelude          ()
 
 import Control.Arrow     (first)
-import Data.Aeson.Extra  (M, FromJSON, ToJSON (..), Value (..), object, (.=))
+import Data.Aeson.Extra  (FromJSON, M, ToJSON (..), Value (..), object, (.=))
 import Data.Aeson.TH     (Options (..), defaultOptions, deriveJSON)
 import Data.Char         (toLower)
-import Data.Csv          (DefaultOrdered (..), ToNamedRecord (..), ToField(..))
+import Data.Csv          (DefaultOrdered (..), ToField (..), ToNamedRecord (..))
+import Data.GADT.Compare ((:~:)(..), GEq (..), GCompare(..), GOrdering(..))
 import Data.Swagger      (ToParamSchema, ToSchema (..))
 import Futurice.Generics (sopDeclareNamedSchema, sopHeaderOrder, sopToJSON,
                           sopToNamedRecord)
@@ -114,6 +118,7 @@ instance ToField FUMUsername where
 -- | List of users
 newtype FUMUsernamesParam = FUMUsernamesParam
     { getFUMUsernamesParam :: [FUMUsername] }
+  deriving (Eq)
 
 instance FromText FUMUsernamesParam where
     fromText = Just . FUMUsernamesParam . map FUMUsername . T.words
@@ -366,3 +371,31 @@ instance DefaultOrdered PowerAbsence where headerOrder = sopHeaderOrder
 instance ToNamedRecord PowerAbsence where toNamedRecord = sopToNamedRecord
 instance ToJSON PowerAbsence where toJSON = sopToJSON
 instance ToSchema PowerAbsence where declareNamedSchema = sopDeclareNamedSchema
+
+-------------------------------------------------------------------------------
+-- Precalculated Endpoints
+-------------------------------------------------------------------------------
+
+data EndpointTag a where
+    EMissingHoursList :: EndpointTag [MissingHour]
+    -- ^ missing hours from beginning of the previous month till today
+    EPowerUsers       :: EndpointTag (Vector PowerUser)
+    -- ^ Users in planmill with some additional information
+    EPowerAbsences    :: EndpointTag (Vector PowerAbsence)
+    -- ^ Absences in next 365 days
+    deriving (Typeable)
+
+instance GEq EndpointTag where
+    geq EMissingHoursList EMissingHoursList = Just Refl
+    geq EPowerUsers       EPowerUsers       = Just Refl
+    geq EPowerAbsences    EPowerAbsences    = Just Refl
+    geq _ _ = Nothing
+
+instance GCompare EndpointTag where
+    gcompare EMissingHoursList EMissingHoursList = GEQ
+    gcompare EMissingHoursList _                 = GLT
+    gcompare _                 EMissingHoursList = GGT
+    gcompare EPowerUsers       EPowerUsers       = GEQ
+    gcompare EPowerUsers       _                 = GLT
+    gcompare _                 EPowerUsers       = GGT
+    gcompare EPowerAbsences    EPowerAbsences    = GEQ

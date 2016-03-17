@@ -12,6 +12,9 @@ module Futurice.App.FutuHours (defaultMain) where
 import Futurice.Prelude
 import Prelude          ()
 
+import Control.Concurrent.STM      (atomically, newTVar)
+import Control.Monad               (foldM, forM_)
+import Data.Functor.Compose        (Compose (..))
 import Data.Pool                   (createPool, withResource)
 import Network.Wai
 import Network.Wai.Middleware.Cors (simpleCors)
@@ -20,6 +23,10 @@ import Servant.Cache.Class         (DynMapCache)
 import Servant.Futurice
 import System.IO                   (hPutStrLn, stderr)
 
+import Distribution.Server.Framework.Cron (CronJob (..), JobFrequency (..),
+                                           addCronJob, newCron)
+
+import qualified Data.Dependent.Map            as DMap
 import qualified Database.PostgreSQL.Simple    as Postgres
 import qualified Network.Wai.Handler.Warp      as Warp
 import qualified PlanMill                      as PM (Cfg (..))
@@ -30,6 +37,7 @@ import Futurice.App.FutuHours.API
 import Futurice.App.FutuHours.Config          (Config (..), getConfig)
 import Futurice.App.FutuHours.Endpoints
 import Futurice.App.FutuHours.PlanMillUserIds (planMillUserIds)
+import Futurice.App.FutuHours.Precalc
 import Futurice.App.FutuHours.Types
 
 import Futurice.App.FutuHours.Orphans ()
@@ -51,6 +59,10 @@ server ctx = pure "Hello to futuhours api"
     :<|> getLegacyUsers ctx
     :<|> (\un lte gte -> getLegacyHours lte gte ctx un)
 
+-------------------------------------------------------------------------------
+-- Startup
+-------------------------------------------------------------------------------
+
 -- | Server with docs and cache and status
 server' :: DynMapCache -> Context -> Server FutuHoursAPI'
 server' cache ctx = futuriceApiServer cache futuhoursAPI (server ctx)
@@ -58,6 +70,13 @@ server' cache ctx = futuriceApiServer cache futuhoursAPI (server ctx)
 -- | Wai application
 app :: DynMapCache -> Context -> Application
 app cache ctx = simpleCors $ serve futuhoursAPI' (server' cache ctx)
+
+defaultableEndpoints :: [SomeDefaultableEndpoint]
+defaultableEndpoints =
+    [ SDE powerAbsencesEndpoint
+    , SDE powerUsersEndpoint
+    , SDE missingHoursListEndpoint
+    ]
 
 defaultMain :: IO ()
 defaultMain = do
@@ -68,10 +87,28 @@ defaultMain = do
             , PM.cfgApiKey  = cfgPlanmillSignature
             , PM.cfgBaseUrl = cfgPlanmillUrl
             }
+    -- Context
     postgresPool <- createPool (Postgres.connect cfgPostgresConnInfo) Postgres.close 1 10 5
     planmillUserLookup <- withResource postgresPool $ \conn ->
         planMillUserIds pmCfg conn cfgFumToken cfgFumBaseurl cfgFumList
-    let ctx = Context pmCfg postgresPool planmillUserLookup
+
+    precalcEndpoints <- atomically $
+        let f m (SDE de) = do
+                v <- newTVar Nothing
+                pure $ DMap.insert (defEndTag de) (Compose v) m
+        in foldM f DMap.empty defaultableEndpoints
+
+    let ctx = Context pmCfg postgresPool planmillUserLookup precalcEndpoints
+
+    -- Cron
+    cron <- newCron ()
+    forM_ (zip defaultableEndpoints [1, 30, 120]) $ \(SDE de, d) -> do
+        addCronJob cron $ CronJob "some job" (TestJobFrequency $ 30*60) False $
+            cronEndpoint de ctx
+        addCronJob cron $ CronJob "first some job" (TestJobFrequency d) True $
+            cronEndpoint de ctx
+
+    -- Startup
     cache <- DynMap.newIO
     let app' = app cache ctx
     hPutStrLn stderr "Now I'll start the webservice"
