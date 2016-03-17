@@ -118,6 +118,7 @@ instance ToField FUMUsername where
 -- | List of users
 newtype FUMUsernamesParam = FUMUsernamesParam
     { getFUMUsernamesParam :: [FUMUsername] }
+  deriving (Eq)
 
 instance FromText FUMUsernamesParam where
     fromText = Just . FUMUsernamesParam . map FUMUsername . T.words

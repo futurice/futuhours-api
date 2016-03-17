@@ -19,8 +19,10 @@ module Futurice.App.FutuHours.Endpoints (
     -- * Reports
     getMissingHoursReport,
     getMissingHoursReportList,
+    missingHoursListEndpoint,
     -- * Power
     getPowerUsers,
+    powerUsersEndpoint,
     getPowerAbsences,
     powerAbsencesEndpoint,
     -- * Legacy endpoins
@@ -196,49 +198,84 @@ getMissingHoursReport ctx a b usernames =
     usernames' :: [FUMUsername]
     usernames' = maybe [] getFUMUsernamesParam usernames
 
-getMissingHoursReportList
-    :: (Applicative m, MonadIO m, MonadError ServantErr m)
-    => Context
-    -> Maybe Day -> Maybe Day -> Maybe FUMUsernamesParam
-    -> m [MissingHour]
-getMissingHoursReportList ctx a b usernames = do
-    b' <- maybe getCurrentDayInFinland pure b
-    let a' = fromMaybe (beginningOfPrevMonth b') a
-    r <- getMissingHoursReport ctx a' b' usernames
-    pure
-        . concatMap (f . snd)
-        . sortBy (comparing fst)
-        . HM.toList
-        . unMissingHoursReport
-        $ r
+missingHoursListEndpoint
+    :: DefaultableEndpoint
+        '[Maybe Day, Maybe Day, Maybe FUMUsernamesParam]
+        (PM.Interval Day, [FUMUsername])
+        [MissingHour]
+missingHoursListEndpoint = DefaultableEndpoint
+    { defEndTag = EMissingHoursList
+    , defEndDefaultParsedParam = do
+        b <- getCurrentDayInFinland
+        let a = beginningOfPrevMonth b
+        return (fromJust $ PM.mkInterval a b, [])
+    , defEndDefaultParams = I Nothing :* I Nothing :* I Nothing :* Nil
+    , defEndParseParams = \(I a :* I b :* I usernames :* Nil) -> do
+        b' <- maybe getCurrentDayInFinland pure b
+        let a' = fromMaybe (beginningOfPrevMonth b') a
+        interval <- maybe (throwError err400) pure $ PM.mkInterval a' b'
+        let usernames' = maybe [] getFUMUsernamesParam usernames
+        pure (interval, usernames')
+    , defEndAction = missingHoursList
+    }
   where
-    f (MissingHours n t c ds) = uncurry (MissingHour n t c) <$> Map.toList (getMap ds)
+    missingHoursList :: Context -> (PM.Interval Day, [FUMUsername]) -> IO [MissingHour]
+    missingHoursList ctx (interval, usernames) = executeCachedAdminPlanmill ctx p $ do
+        r <- missingHours (ctxPlanmillUserLookup ctx) interval usernames
+        pure
+            . concatMap (f . snd)
+            . sortBy (comparing fst)
+            . HM.toList
+            . unMissingHoursReport
+            $ r
+      where
+        p = Proxy :: Proxy
+            '[PM.UserCapacities, PM.Timereports, PM.User, PM.Team, PM.Meta]
+        f (MissingHours n t c ds) = uncurry (MissingHour n t c) <$> Map.toList (getMap ds)
+
+getMissingHoursReportList
+    :: Context
+    -> Maybe Day -> Maybe Day -> Maybe FUMUsernamesParam
+    -> EitherT ServantErr IO [MissingHour]
+getMissingHoursReportList = servantEndpoint missingHoursListEndpoint
 
 -------------------------------------------------------------------------------
 -- Power
 -------------------------------------------------------------------------------
 
-getPowerUsers :: MonadIO m => Context -> m (Vector PowerUser)
-getPowerUsers ctx = executeCachedAdminPlanmill ctx p $ traverse powerUser pmUsers
+powerUsersEndpoint
+    :: DefaultableEndpoint '[] () (Vector PowerUser)
+powerUsersEndpoint = DefaultableEndpoint
+    { defEndTag = EPowerUsers
+    , defEndDefaultParsedParam = pure ()
+    , defEndDefaultParams = Nil
+    , defEndParseParams = \Nil -> pure ()
+    , defEndAction = powerUsers
+    }
   where
-    p = Proxy :: Proxy '[PM.User, PM.Team]
-    pmUsers = V.fromList $ HM.elems $ ctxPlanmillUserLookup ctx
+    powerUsers :: Context -> () -> IO (Vector PowerUser)
+    powerUsers ctx () = executeCachedAdminPlanmill ctx p $ traverse powerUser pmUsers
+      where
+        p = Proxy :: Proxy '[PM.User, PM.Team]
+        pmUsers = V.fromList $ HM.elems $ ctxPlanmillUserLookup ctx
 
-    powerUser
-        :: ( Applicative n, PM.MonadPlanMill n
-           , PM.MonadPlanMillC n PM.User, PM.MonadPlanMillC n PM.Team
-           )
-        => PM.UserId -> n PowerUser
-    powerUser uid = do
-        u <- PM.planmillAction $ PM.user uid
-        t <- traverse (PM.planmillAction . PM.team) (PM.uTeam u)
-        return $ PowerUser
-            { powerUserFirst = PM.uFirstName u
-            , powerUserLast  = PM.uLastName u
-            , powerUserTeam  = maybe "Unknown Team" PM.tName t
-            , powerUserStart = utctDay <$> PM.uHireDate u
-            }
+        powerUser
+            :: ( Applicative n, PM.MonadPlanMill n
+               , PM.MonadPlanMillC n PM.User, PM.MonadPlanMillC n PM.Team
+               )
+            => PM.UserId -> n PowerUser
+        powerUser uid = do
+            u <- PM.planmillAction $ PM.user uid
+            t <- traverse (PM.planmillAction . PM.team) (PM.uTeam u)
+            return $ PowerUser
+                { powerUserFirst = PM.uFirstName u
+                , powerUserLast  = PM.uLastName u
+                , powerUserTeam  = maybe "Unknown Team" PM.tName t
+                , powerUserStart = utctDay <$> PM.uHireDate u
+                }
 
+getPowerUsers :: Context -> EitherT ServantErr IO (Vector PowerUser)
+getPowerUsers = servantEndpoint powerUsersEndpoint
 
 powerAbsencesEndpoint
     :: DefaultableEndpoint '[Maybe Day, Maybe Day] (PM.Interval Day) (Vector PowerAbsence)
@@ -251,9 +288,9 @@ powerAbsencesEndpoint = DefaultableEndpoint
         return $ fromJust $ PM.mkInterval a b
     , defEndDefaultParams = I Nothing :* I Nothing :* Nil
     , defEndParseParams = \(I a :* I b :* Nil) -> do
-          b' <- maybe (addDays 365 <$> getCurrentDayInFinland) pure b
-          let a' = fromMaybe (addDays (-365) $ beginningOfPrevMonth b') a
-          maybe (throwError err400) pure $ PM.mkInterval a' b'
+        b' <- maybe (addDays 365 <$> getCurrentDayInFinland) pure b
+        let a' = fromMaybe (addDays (-365) $ beginningOfPrevMonth b') a
+        maybe (throwError err400) pure $ PM.mkInterval a' b'
     , defEndAction = powerAbsences
     }
   where

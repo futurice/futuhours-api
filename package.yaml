@@ -27,6 +27,8 @@ library:
     - bytestring
     - cassava
     - containers
+    - dependent-map
+    - dependent-sum
     - either
     - exceptions
     - fum-client

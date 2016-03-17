@@ -13,7 +13,7 @@ import Futurice.Prelude
 import Prelude          ()
 
 import Control.Concurrent.STM      (atomically, newTVar)
-import Control.Lens                ((&))
+import Control.Monad               (foldM, forM_)
 import Data.Functor.Compose        (Compose (..))
 import Data.Pool                   (createPool, withResource)
 import Network.Wai
@@ -71,6 +71,13 @@ server' cache ctx = futuriceApiServer cache futuhoursAPI (server ctx)
 app :: DynMapCache -> Context -> Application
 app cache ctx = simpleCors $ serve futuhoursAPI' (server' cache ctx)
 
+defaultableEndpoints :: [SomeDefaultableEndpoint]
+defaultableEndpoints =
+    [ SDE powerAbsencesEndpoint
+    , SDE powerUsersEndpoint
+    , SDE missingHoursListEndpoint
+    ]
+
 defaultMain :: IO ()
 defaultMain = do
     hPutStrLn stderr "Hello, I'm futuhours-api server"
@@ -84,18 +91,22 @@ defaultMain = do
     postgresPool <- createPool (Postgres.connect cfgPostgresConnInfo) Postgres.close 1 10 5
     planmillUserLookup <- withResource postgresPool $ \conn ->
         planMillUserIds pmCfg conn cfgFumToken cfgFumBaseurl cfgFumList
-    precalcEndpoints <- atomically $ do
-        v <- newTVar Nothing
-        pure $ DMap.empty
-            & DMap.insert EPowerAbsences (Compose v)
+
+    precalcEndpoints <- atomically $
+        let f m (SDE de) = do
+                v <- newTVar Nothing
+                pure $ DMap.insert (defEndTag de) (Compose v) m
+        in foldM f DMap.empty defaultableEndpoints
+
     let ctx = Context pmCfg postgresPool planmillUserLookup precalcEndpoints
 
     -- Cron
     cron <- newCron ()
-    addCronJob cron $ CronJob "power absences" (TestJobFrequency $ 30*60) False $
-        cronEndpoint powerAbsencesEndpoint ctx
-    addCronJob cron $ CronJob "first power absences" (TestJobFrequency $ 1) True $
-        cronEndpoint powerAbsencesEndpoint ctx
+    forM_ (zip defaultableEndpoints [1, 30, 120]) $ \(SDE de, d) -> do
+        addCronJob cron $ CronJob "some job" (TestJobFrequency $ 30*60) False $
+            cronEndpoint de ctx
+        addCronJob cron $ CronJob "first some job" (TestJobFrequency d) True $
+            cronEndpoint de ctx
 
     -- Startup
     cache <- DynMap.newIO

@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE GADTs               #-}
 {-# LANGUAGE RankNTypes          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies        #-}
@@ -41,17 +42,15 @@ lookupEndpoint Context { ctxPrecalcEndpoints = m } e =
         Just tvar -> atomically $ readTVar $ getCompose tvar
 
 data DefaultableEndpoint (xs :: [*]) (p :: *) (r :: *) = DefaultableEndpoint
-    { defEndTag
-        :: EndpointTag r
-    , defEndDefaultParsedParam
-        :: IO p
-    , defEndDefaultParams
-        :: NP I xs
-    , defEndParseParams
-        :: NP I xs -> EitherT ServantErr IO p
-    , defEndAction
-        :: Context -> p -> IO r
+    { defEndTag                :: EndpointTag r
+    , defEndDefaultParsedParam :: IO p
+    , defEndDefaultParams      :: NP I xs
+    , defEndParseParams        :: NP I xs -> EitherT ServantErr IO p
+    , defEndAction             :: Context -> p -> IO r
     }
+
+data SomeDefaultableEndpoint where
+    SDE :: DefaultableEndpoint xs p r -> SomeDefaultableEndpoint
 
 servantEndpoint
     :: forall xs p r. (All (Generics.SOP.Compose Eq I) xs)
