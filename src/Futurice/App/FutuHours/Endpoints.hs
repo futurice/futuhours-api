@@ -33,7 +33,6 @@ module Futurice.App.FutuHours.Endpoints (
 import Futurice.Prelude
 import Prelude          ()
 
-import Control.Monad                    (join)
 import Control.Monad.Trans.Either       (EitherT)
 import Data.Aeson.Extra                 (M (..))
 import Data.BinaryFromJSON              (BinaryFromJSON)

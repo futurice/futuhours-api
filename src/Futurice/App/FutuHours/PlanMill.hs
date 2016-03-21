@@ -9,7 +9,6 @@ module Futurice.App.FutuHours.PlanMill where
 import Futurice.Prelude
 import Prelude          ()
 
-import Control.Monad              (void)
 import Control.Monad.Http         (HttpT, evalHttpT)
 import Control.Monad.Logger       (LoggingT, MonadLogger, logDebug, logWarn,
                                    runStderrLoggingT)

@@ -14,7 +14,6 @@ import Futurice.Prelude
 import Prelude          ()
 
 import Control.Concurrent.STM   (atomically)
-import Control.Lens
 import Data.Swagger
 import Futurice.Colour          (SColour)
 import Servant

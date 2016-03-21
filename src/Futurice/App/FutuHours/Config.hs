@@ -10,7 +10,6 @@ import Prelude          ()
 
 import Data.ByteString    (ByteString)
 import System.Environment (lookupEnv)
-import Text.Read          (readMaybe)
 
 import Database.PostgreSQL.Simple     (ConnectInfo (..))
 import Database.PostgreSQL.Simple.URL (parseDatabaseUrl)

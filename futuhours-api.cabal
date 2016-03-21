@@ -46,7 +46,7 @@ library
     , exceptions
     , fum-client
     , futulogo
-    , futurice-prelude
+    , futurice-prelude >=0.1.3.0
     , generics-sop >=0.2.1.0 && <0.3
     , generics-sop-lens >=0.1.0.0 && <0.2
     , hashable
@@ -105,7 +105,6 @@ library
       Futurice.App.FutuHours.Precalc
       Futurice.App.FutuHours.Reports.MissingHours
       Futurice.App.FutuHours.Types
-      Futurice.Generics
       Generics.SOP.Curry
       Servant.Futurice
   default-language: Haskell2010
