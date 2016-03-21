@@ -40,14 +40,16 @@ import Futurice.Prelude
 import Prelude          ()
 
 import Control.Arrow     (first)
-import Data.Aeson.Extra  (FromJSON, M, ToJSON (..), Value (..), object, (.=))
+import Data.Aeson.Extra  (FromJSON (..), M, ToJSON (..), Value (..), object,
+                          (.=))
 import Data.Aeson.TH     (Options (..), defaultOptions, deriveJSON)
 import Data.Char         (toLower)
-import Data.Csv          (DefaultOrdered (..), ToField (..), ToNamedRecord (..))
-import Data.GADT.Compare ((:~:)(..), GEq (..), GCompare(..), GOrdering(..))
+import Data.Csv          (DefaultOrdered (..), FromRecord (..), ToField (..),
+                          ToNamedRecord (..))
+import Data.GADT.Compare ((:~:) (..), GCompare (..), GEq (..), GOrdering (..))
 import Data.Swagger      (ToParamSchema, ToSchema (..))
-import Futurice.Generics (sopDeclareNamedSchema, sopHeaderOrder, sopToJSON,
-                          sopToNamedRecord)
+import Futurice.Generics (sopDeclareNamedSchema, sopHeaderOrder, sopParseJSON,
+                          sopParseRecord, sopToJSON, sopToNamedRecord)
 import Servant           (Capture, FromText (..))
 import Servant.Docs      (DocCapture (..), ToCapture (..))
 
@@ -335,7 +337,9 @@ deriveGeneric ''MissingHour
 
 instance DefaultOrdered MissingHour where headerOrder = sopHeaderOrder
 instance ToNamedRecord MissingHour where toNamedRecord = sopToNamedRecord
+instance FromRecord MissingHour where parseRecord = sopParseRecord
 instance ToJSON MissingHour where toJSON = sopToJSON
+instance FromJSON MissingHour where parseJSON = sopParseJSON
 instance ToSchema MissingHour where declareNamedSchema = sopDeclareNamedSchema
 
 -------------------------------------------------------------------------------

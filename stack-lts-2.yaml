@@ -11,7 +11,7 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-futurice-prelude.git
-    commit: a1fb5f4153c590ff52a6880a17e30128b300eb75
+    commit: bb7149e36a3b8189c1c7dba1d793b0dce94555f3
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-monad-http.git
@@ -19,7 +19,7 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-planmill-client.git
-    commit: 01f56919aed5956fb64e7a5f13bbf8411b2deb0e
+    commit: 111b174c4bc91d5604248f96ae03d42989675e8a
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-servant-cache.git
@@ -31,7 +31,7 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/phadej/generics-sop-lens.git
-    commit: 695f1d3af1c8109841ba3c65056ddeb4b4c172a3
+    commit: 789cee48725ec6fb4ce8ce1fd122453496ad6ed4
   extra-dep: true
 - location:
     git: https://github.com/phadej/servant-swagger-ui.git
@@ -89,7 +89,7 @@ extra-deps:
 - servant-server-0.4.4.6
 - servant-swagger-1.0.3
 - strict-base-types-0.5.0
-- swagger2-2.0.1
+- swagger2-2.0.2
 - time-parsers-0.1.0.0
 - transformers-0.4.3.0
 - transformers-compat-0.5.1.4

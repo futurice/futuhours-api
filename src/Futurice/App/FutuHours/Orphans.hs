@@ -13,12 +13,11 @@ import Prelude          ()
 
 import Data.Aeson.Compat  (Value (..))
 import Data.Aeson.Extra   (M (..), ToJSONKey (..))
-import Data.Csv           (ToField (..))
+import Data.Csv           (FromField(..), ToField (..))
 import Data.Swagger
 import Data.Time.Parsers  (day)
 import PlanMill.Types     (Identifier (..))
 import Servant            (FromText (..))
-import Generics.SOP       (I(..))
 import Text.Parsec        (parse)
 import Text.Parsec.String ()
 
@@ -45,5 +44,6 @@ instance ToSchema v => ToSchema (M (Map k v)) where
 instance ToField (Identifier a) where
     toField (Ident x) = toField x
 
-instance Eq a => Eq (I a) where
-    I a == I b = a == b
+instance FromField Day where
+    parseField s = either (fail . show) return $
+        parse day "FromField Day" s
