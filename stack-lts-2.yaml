@@ -7,7 +7,7 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-futulogo.git
-    commit: 5c5b57fc5927d5e84fb1c1e42ace701d0b938d66
+    commit: 31b7d957374e71fe2f5e4f3835880bc88351f9e5
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-futurice-prelude.git
@@ -23,26 +23,25 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-servant-cache.git
-    commit: 3384dca89849b066fa264695e687761d525ef0d3
+    commit: 3f218a85f23c707524c5d0c6598099157a8626cc
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-servant-status.git
-    commit: 655edd38563d3923a83c048cc5c894c1ab9b33d7
+    commit: 08289741f58916ec0adef6b49c4a35cf94ebb290
   extra-dep: true
 - location:
     git: https://github.com/phadej/generics-sop-lens.git
-    commit: 789cee48725ec6fb4ce8ce1fd122453496ad6ed4
+    commit: 8ad8e0f998bc4fd9199cb1b0a4be812e764d63dc
   extra-dep: true
 - location:
     git: https://github.com/phadej/servant-swagger-ui.git
-    commit: 445364492f7fb9b7d9a1294d4ae8c1c8cdc3fb11
+    commit: 5f484f10d2182f917b0c3c094daee5d6e54e8a4e
   extra-dep: true
 extra-deps:
 - aeson-compat-0.3.1.0
 - aeson-extra-0.3.1.1
 - ansi-pretty-0.1.2.0
 - base-compat-0.9.0
-- JuicyPixels-3.2.7
 - base-orphans-0.5.3
 - base-prelude-0.1.21
 - bifunctors-5.2.1
@@ -51,6 +50,7 @@ extra-deps:
 - cassava-0.4.5.0
 - composition-extra-2.0.0
 - conduit-extra-1.1.11
+- control-monad-omega-0.3.1
 - dependent-map-0.2.1.0
 - dependent-sum-0.3.2.1
 - exceptions-0.8.2.1
@@ -62,6 +62,8 @@ extra-deps:
 - hspec-core-2.2.2
 - hspec-discover-2.2.2
 - hspec-expectations-0.7.2
+- http-api-data-0.2.2
+- JuicyPixels-3.2.7
 - lattices-1.5.0
 - lens-4.13
 - monad-time-0.1
@@ -80,16 +82,17 @@ extra-deps:
 - regex-applicative-text-0.1.0.1
 - resourcet-1.1.7.3
 - semigroupoids-5.0.1
-- servant-0.4.4.6
-- servant-blaze-0.4.4.6
-- servant-cassava-0.4.4.6
-- servant-docs-0.4.4.6
-- servant-JuicyPixels-0.3.0.0
-- servant-lucid-0.4.4.6
-- servant-server-0.4.4.6
+- servant-0.5
+- servant-blaze-0.5
+- servant-cassava-0.5
+- servant-docs-0.5
+- servant-JuicyPixels-0.3.0.1
+- servant-lucid-0.5
+- servant-server-0.5
 - servant-swagger-1.0.3
 - strict-base-types-0.5.0
 - swagger2-2.0.2
+- time-locale-compat-0.1.1.1
 - time-parsers-0.1.0.0
 - transformers-0.4.3.0
 - transformers-compat-0.5.1.4
@@ -100,9 +103,10 @@ extra-deps:
 - universe-reverse-instances-1.0
 - unix-time-0.3.6
 - vector-0.11.0.0
+- vector-binary-instances-0.2.3.1
 - vector-instances-3.3.1
 - wai-cors-0.2.4
-- wai-extra-3.0.14.1
+- wai-extra-3.0.14.3
 - yaml-0.8.12
 flags:
   QuickCheck:

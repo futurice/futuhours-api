@@ -7,7 +7,7 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-futulogo.git
-    commit: 5c5b57fc5927d5e84fb1c1e42ace701d0b938d66
+    commit: 31b7d957374e71fe2f5e4f3835880bc88351f9e5
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-futurice-prelude.git
@@ -23,43 +23,46 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-servant-cache.git
-    commit: 3384dca89849b066fa264695e687761d525ef0d3
+    commit: 3f218a85f23c707524c5d0c6598099157a8626cc
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-servant-status.git
-    commit: 655edd38563d3923a83c048cc5c894c1ab9b33d7
+    commit: 08289741f58916ec0adef6b49c4a35cf94ebb290
   extra-dep: true
 - location:
     git: https://github.com/phadej/generics-sop-lens.git
-    commit: 789cee48725ec6fb4ce8ce1fd122453496ad6ed4
+    commit: 8ad8e0f998bc4fd9199cb1b0a4be812e764d63dc
   extra-dep: true
 - location:
     git: https://github.com/phadej/servant-swagger-ui.git
-    commit: 445364492f7fb9b7d9a1294d4ae8c1c8cdc3fb11
+    commit: 5f484f10d2182f917b0c3c094daee5d6e54e8a4e
   extra-dep: true
 extra-deps:
 - aeson-compat-0.3.1.0
 - aeson-extra-0.3.1.1
 - ansi-pretty-0.1.2.0
+- base-compat-0.9.0
 - binary-orphans-0.1.4.0
 - binary-tagged-0.1.3.1
 - composition-extra-2.0.0
+- control-monad-omega-0.3.1
 - dependent-map-0.2.1.0
 - dependent-sum-0.3.2.1
 - generics-sop-0.2.1.0
 - hashable-time-0.2
-- iso8601-time-0.1.4
 - JuicyPixels-3.2.7
 - lattices-1.5.0
-- monad-http-0.1.0.0
 - monad-time-0.1
 - monadcryptorandom-0.7.0
 - recursion-schemes-4.1.2
 - regex-applicative-text-0.1.0.1
-- servant-blaze-0.4.4.6
-- servant-cassava-0.4.4.6
-- servant-JuicyPixels-0.3.0.0
-- servant-lucid-0.4.4.6
+- servant-0.5
+- servant-blaze-0.5
+- servant-cassava-0.5
+- servant-docs-0.5
+- servant-JuicyPixels-0.3.0.1
+- servant-lucid-0.5
+- servant-server-0.5
 - servant-swagger-1.0.3
 - strict-base-types-0.5.0
 - swagger2-2.0.2
