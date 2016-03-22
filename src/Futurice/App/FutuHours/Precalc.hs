@@ -13,7 +13,7 @@ import Prelude          ()
 
 import Control.Concurrent.STM     (atomically, readTVar, writeTVar)
 import Control.Monad.Trans.Class  (MonadTrans (..))
-import Control.Monad.Trans.Either (EitherT)
+import Control.Monad.Trans.Except (ExceptT)
 import Data.Functor.Compose       (Compose (..))
 import Generics.SOP
 import Generics.SOP.Curry
@@ -25,18 +25,18 @@ import Futurice.App.FutuHours.Context
 import Futurice.App.FutuHours.Types
 
 executeEndpoint
-    :: Context
+    :: Ctx
     -> EndpointTag a
     -> IO a  -- ^ action
     -> IO ()
-executeEndpoint Context { ctxPrecalcEndpoints = m } e a = case DMap.lookup e m of
+executeEndpoint Ctx { ctxPrecalcEndpoints = m } e a = case DMap.lookup e m of
     Nothing   -> pure ()
     Just tvar -> do
         x <- a
         atomically $ writeTVar (getCompose tvar) (Just x)
 
-lookupEndpoint :: Context -> EndpointTag a -> IO (Maybe a)
-lookupEndpoint Context { ctxPrecalcEndpoints = m } e =
+lookupEndpoint :: Ctx -> EndpointTag a -> IO (Maybe a)
+lookupEndpoint Ctx { ctxPrecalcEndpoints = m } e =
     case DMap.lookup e m of
         Nothing   -> pure Nothing
         Just tvar -> atomically $ readTVar $ getCompose tvar
@@ -45,8 +45,8 @@ data DefaultableEndpoint (xs :: [*]) (p :: *) (r :: *) = DefaultableEndpoint
     { defEndTag                :: EndpointTag r
     , defEndDefaultParsedParam :: IO p
     , defEndDefaultParams      :: NP I xs
-    , defEndParseParams        :: NP I xs -> EitherT ServantErr IO p
-    , defEndAction             :: Context -> p -> IO r
+    , defEndParseParams        :: NP I xs -> ExceptT ServantErr IO p
+    , defEndAction             :: Ctx -> p -> IO r
     }
 
 data SomeDefaultableEndpoint where
@@ -55,11 +55,11 @@ data SomeDefaultableEndpoint where
 servantEndpoint
     :: forall xs p r. (All (Generics.SOP.Compose Eq I) xs)
     => DefaultableEndpoint xs p r
-    -> Context
-    -> HFn xs (EitherT ServantErr IO r)
+    -> Ctx
+    -> HFn xs (ExceptT ServantErr IO r)
 servantEndpoint de ctx = hCurry endpoint
   where
-    endpoint :: NP I xs -> EitherT ServantErr IO r
+    endpoint :: NP I xs -> ExceptT ServantErr IO r
     endpoint xs
         | xs == defEndDefaultParams de = lift $ do
             l <- lookupEndpoint ctx (defEndTag de)
@@ -75,7 +75,7 @@ servantEndpoint de ctx = hCurry endpoint
 
 cronEndpoint
     :: DefaultableEndpoint xs p r
-    -> Context
+    -> Ctx
     -> IO ()
 cronEndpoint de ctx = executeEndpoint
     ctx

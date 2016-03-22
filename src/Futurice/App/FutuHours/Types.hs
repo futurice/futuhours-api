@@ -50,7 +50,7 @@ import Data.GADT.Compare ((:~:) (..), GCompare (..), GEq (..), GOrdering (..))
 import Data.Swagger      (ToParamSchema, ToSchema (..))
 import Futurice.Generics (sopDeclareNamedSchema, sopHeaderOrder, sopParseJSON,
                           sopParseRecord, sopToJSON, sopToNamedRecord)
-import Servant           (Capture, FromText (..))
+import Servant           (Capture, FromHttpApiData (..))
 import Servant.Docs      (DocCapture (..), ToCapture (..))
 
 import qualified Data.Aeson                           as Aeson
@@ -83,8 +83,8 @@ instance ToParamSchema UserId
 instance ToCapture (Capture "userid" UserId) where
     toCapture _ = DocCapture "userid" "PlanMill userid"
 
-instance FromText UserId where
-    fromText = fmap UserId . fromText
+instance FromHttpApiData UserId where
+    parseUrlPiece = fmap UserId . parseUrlPiece 
 
 -------------------------------------------------------------------------------
 -- FUMUsername
@@ -103,8 +103,8 @@ instance ToParamSchema FUMUsername
 instance ToCapture (Capture "fum-id" FUMUsername) where
     toCapture _ = DocCapture "fum-id" "FUM username"
 
-instance FromText FUMUsername where
-    fromText = fmap FUMUsername . fromText
+instance FromHttpApiData FUMUsername where
+    parseUrlPiece = fmap FUMUsername . parseUrlPiece 
 
 instance Postgres.ToField FUMUsername where
     toField (FUMUsername name) = Postgres.toField name
@@ -122,8 +122,8 @@ newtype FUMUsernamesParam = FUMUsernamesParam
     { getFUMUsernamesParam :: [FUMUsername] }
   deriving (Eq)
 
-instance FromText FUMUsernamesParam where
-    fromText = Just . FUMUsernamesParam . map FUMUsername . T.words
+instance FromHttpApiData FUMUsernamesParam where
+    parseUrlPiece = Right . FUMUsernamesParam . map FUMUsername . T.words
 
 instance ToParamSchema FUMUsernamesParam where
     toParamSchema _ = Swagger.toParamSchema (Proxy :: Proxy Text) -- TODO: pattern

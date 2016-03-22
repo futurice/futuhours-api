@@ -11,7 +11,7 @@
 
 -- | API endpoints
 module Futurice.App.FutuHours.Endpoints (
-    Context(..),
+    Ctx(..),
     addPlanmillApiKey,
     getProjects,
     getTimereports,
@@ -33,7 +33,7 @@ module Futurice.App.FutuHours.Endpoints (
 import Futurice.Prelude
 import Prelude          ()
 
-import Control.Monad.Trans.Either       (EitherT)
+import Control.Monad.Trans.Except       (ExceptT)
 import Data.Aeson.Extra                 (M (..))
 import Data.BinaryFromJSON              (BinaryFromJSON)
 import Data.List                        (nub, sortBy)
@@ -66,24 +66,24 @@ import qualified PlanMill               as PM
 import qualified PlanMill.Test          as PM (evalPlanMillIO)
 
 -- | Add planmill api key.
-addPlanmillApiKey :: MonadIO m => Context -> FUMUsername -> PlanmillApiKey -> m ()
-addPlanmillApiKey Context { ctxPostgresPool = pool } username apikey =
+addPlanmillApiKey :: MonadIO m => Ctx -> FUMUsername -> PlanmillApiKey -> m ()
+addPlanmillApiKey Ctx { ctxPostgresPool = pool } username apikey =
     liftIO $ withResource pool $ \conn -> do
         rows <- execute conn "INSERT INTO futuhours.apikeys (fum_username, planmill_apikey) VALUES (?, ?)" (username, apikey)
         print username
         print apikey
         print rows
 
-getPlanmillApiKey :: MonadIO m => Context -> FUMUsername -> m (Maybe PlanmillApiKey)
-getPlanmillApiKey  Context { ctxPostgresPool = pool } username =
+getPlanmillApiKey :: MonadIO m => Ctx -> FUMUsername -> m (Maybe PlanmillApiKey)
+getPlanmillApiKey  Ctx { ctxPostgresPool = pool } username =
     liftIO $ withResource pool $ \conn -> do
         fromOnly <$$> singleQuery conn "SELECT planmill_apikey FROM futuhours.apikeys WHERE fum_username = ? LIMIT 1" (Only username)
 
-getPlanmillApiKey' :: (MonadIO m, Functor m) => Context -> FUMUsername -> m (Maybe PM.ApiKey)
+getPlanmillApiKey' :: (MonadIO m, Functor m) => Ctx -> FUMUsername -> m (Maybe PM.ApiKey)
 getPlanmillApiKey' ctx username = (fmap . fmap) f (getPlanmillApiKey ctx username)
   where f (PlanmillApiKey apiKey) = PM.ApiKey (TE.encodeUtf8 apiKey)
 
-getTimereports :: Context  -> FUMUsername -> EitherT ServantErr IO (V.Vector Timereport)
+getTimereports :: Ctx  -> FUMUsername -> ExceptT ServantErr IO (V.Vector Timereport)
 getTimereports = withPlanmillCfg $ \cfg -> liftIO $ runPlanmillT cfg getTimereports'
   where
     getTimereports' :: (MonadPlanMill m, MonadPlanMillC m PM.Timereports) => m (V.Vector Timereport)
@@ -97,8 +97,8 @@ getTimereports = withPlanmillCfg $ \cfg -> liftIO $ runPlanmillT cfg getTimerepo
 --
 -- TODO: Add short living cache (15min?)
 -- TODO: see <https://github.com/futurice/futuhours-api/issues/1>
-getProjects :: MonadIO m => Context -> UserId -> m (V.Vector Project)
-getProjects Context { ctxPlanmillCfg = cfg } (UserId uid) =
+getProjects :: MonadIO m => Ctx -> UserId -> m (V.Vector Project)
+getProjects Ctx { ctxPlanmillCfg = cfg } (UserId uid) =
     liftIO $ nubVector . fmap pmToFh <$> PM.evalPlanMillIO cfg planmill
   where
     -- TODO: there is somewhere better one, I'm sure.
@@ -111,7 +111,7 @@ getProjects Context { ctxPlanmillCfg = cfg } (UserId uid) =
     pmToFh :: PM.ReportableAssignment -> Project
     pmToFh PM.ReportableAssignment{..} = Project raProject raProjectName
 
-getBalances :: MonadIO m => Context -> m (V.Vector Balance)
+getBalances :: MonadIO m => Ctx -> m (V.Vector Balance)
 getBalances ctx = executeCachedAdminPlanmill ctx p $
     V.fromList <$> traverse getBalance (HM.toList (ctxPlanmillUserLookup ctx))
   where
@@ -122,7 +122,7 @@ getBalances ctx = executeCachedAdminPlanmill ctx p $
 
 getLegacyUsers
     :: (MonadIO m, MonadError ServantErr m)
-    => Context -> Maybe Text -> m (Envelope User)
+    => Ctx -> Maybe Text -> m (Envelope User)
 getLegacyUsers = withLegacyPlanmill p $ \uid -> do
     u <- planmillAction $ PM.user uid
     PM.TimeBalance balance <- planmillAction $ PM.userTimeBalance uid
@@ -141,7 +141,7 @@ getLegacyHours
     :: (MonadIO m, MonadError ServantErr m)
     => Maybe Day  -- ^ Day GTE, @>=@
     -> Maybe Day  -- ^ Day TTE, @<=@
-    -> Context -> Maybe Text -> m (Envelope Hour)
+    -> Ctx -> Maybe Text -> m (Envelope Hour)
 getLegacyHours gteDay lteDay =
     case join (PM.mkResultInterval PM.IntervalStart <$> lte <*> gte) of
         Nothing       -> \_ _ -> throwError err400
@@ -182,7 +182,7 @@ getLegacyHours gteDay lteDay =
 
 getMissingHoursReport
     :: (MonadIO m, MonadError ServantErr m)
-    => Context
+    => Ctx
     -> Day -> Day -> Maybe FUMUsernamesParam
     -> m MissingHoursReport
 getMissingHoursReport ctx a b usernames =
@@ -218,7 +218,7 @@ missingHoursListEndpoint = DefaultableEndpoint
     , defEndAction = missingHoursList
     }
   where
-    missingHoursList :: Context -> (PM.Interval Day, [FUMUsername]) -> IO [MissingHour]
+    missingHoursList :: Ctx -> (PM.Interval Day, [FUMUsername]) -> IO [MissingHour]
     missingHoursList ctx (interval, usernames) = executeCachedAdminPlanmill ctx p $ do
         r <- missingHours (ctxPlanmillUserLookup ctx) interval usernames
         pure
@@ -233,9 +233,9 @@ missingHoursListEndpoint = DefaultableEndpoint
         f (MissingHours n t c ds) = uncurry (MissingHour n t c) <$> Map.toList (getMap ds)
 
 getMissingHoursReportList
-    :: Context
+    :: Ctx
     -> Maybe Day -> Maybe Day -> Maybe FUMUsernamesParam
-    -> EitherT ServantErr IO [MissingHour]
+    -> ExceptT ServantErr IO [MissingHour]
 getMissingHoursReportList = servantEndpoint missingHoursListEndpoint
 
 -------------------------------------------------------------------------------
@@ -252,7 +252,7 @@ powerUsersEndpoint = DefaultableEndpoint
     , defEndAction = powerUsers
     }
   where
-    powerUsers :: Context -> () -> IO (Vector PowerUser)
+    powerUsers :: Ctx -> () -> IO (Vector PowerUser)
     powerUsers ctx () = executeCachedAdminPlanmill ctx p $ traverse powerUser pmUsers
       where
         p = Proxy :: Proxy '[PM.User, PM.Team]
@@ -273,7 +273,7 @@ powerUsersEndpoint = DefaultableEndpoint
                 , powerUserStart = utctDay <$> PM.uHireDate u
                 }
 
-getPowerUsers :: Context -> EitherT ServantErr IO (Vector PowerUser)
+getPowerUsers :: Ctx -> ExceptT ServantErr IO (Vector PowerUser)
 getPowerUsers = servantEndpoint powerUsersEndpoint
 
 powerAbsencesEndpoint
@@ -294,7 +294,7 @@ powerAbsencesEndpoint = DefaultableEndpoint
     }
   where
     powerAbsences
-        :: Context -> PM.Interval Day -> IO (Vector PowerAbsence)
+        :: Ctx -> PM.Interval Day -> IO (Vector PowerAbsence)
     powerAbsences ctx interval = executeCachedAdminPlanmill ctx p getPowerAbsences'
       where
         p = Proxy :: Proxy '[PM.Absences]
@@ -315,7 +315,7 @@ powerAbsencesEndpoint = DefaultableEndpoint
             }
 
 getPowerAbsences
-    :: Context -> Maybe Day -> Maybe Day -> EitherT ServantErr IO (Vector PowerAbsence)
+    :: Ctx -> Maybe Day -> Maybe Day -> ExceptT ServantErr IO (Vector PowerAbsence)
 getPowerAbsences = servantEndpoint powerAbsencesEndpoint
 
 toResultInterval :: PM.Interval Day -> PM.ResultInterval
@@ -326,7 +326,7 @@ toResultInterval i = fromJust $ flip PM.elimInterval i $ \a b ->
 -- Helpers
 -------------------------------------------------------------------------------
 
-withPlanmillCfg :: (PM.Cfg -> IO a) -> Context -> FUMUsername -> EitherT ServantErr IO a
+withPlanmillCfg :: (PM.Cfg -> IO a) -> Ctx -> FUMUsername -> ExceptT ServantErr IO a
 withPlanmillCfg action ctx username =do
     planMillId <- maybe (throwError err404) pure $ HM.lookup username (ctxPlanmillUserLookup ctx)
     apiKey     <- maybe (throwError err403) pure =<< getPlanmillApiKey' ctx username
@@ -337,7 +337,7 @@ withLegacyPlanmill
     :: forall m a as. (MonadIO m, MonadError ServantErr m, All BinaryFromJSON as)
     => Proxy as
     -> (forall n. (Applicative n, MonadPlanMill n, All (MonadPlanMillC n) as) => PM.UserId -> n a)
-    -> Context
+    -> Ctx
     -> Maybe Text
     -> m a
 withLegacyPlanmill p action ctx httpRemoteUser = do
@@ -349,7 +349,7 @@ withLegacyPlanmill p action ctx httpRemoteUser = do
 
 executeUncachedAdminPlanmill
     :: forall m a as. (MonadIO m, All BinaryFromJSON as)
-    => Context
+    => Ctx
     -> Proxy as
     -> (forall n. (Applicative n, MonadPlanMill n, All (MonadPlanMillC n) as) => n a)
     -> m a
@@ -359,7 +359,7 @@ executeUncachedAdminPlanmill ctx _ action =
 
 executeCachedAdminPlanmill
     :: forall m a as. (MonadIO m, All BinaryFromJSON as, ForallSymbols BinaryFromJSON PM.EnumDesc)
-    => Context
+    => Ctx
     -> Proxy as
     -> (forall n. (Applicative n, MonadPlanMill n, All (MonadPlanMillC n) as, ForallSymbols (MonadPlanMillC n) PM.EnumDesc) => n a)
     -> m a

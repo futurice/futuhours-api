@@ -10,7 +10,7 @@ import PlanMill                   (Cfg (..))
 import Futurice.App.FutuHours.Types
 
 -- | We probably will have some
-data Context = Context
+data Ctx = Ctx
     { ctxPlanmillCfg        :: !Cfg
     , ctxPostgresPool       :: !(Pool Connection)
     , ctxPlanmillUserLookup :: !PlanmillUserIdLookupTable -- ^ *TODO:* refresh this from time to time

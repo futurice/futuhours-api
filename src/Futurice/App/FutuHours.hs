@@ -43,7 +43,7 @@ import Futurice.App.FutuHours.Types
 import Futurice.App.FutuHours.Orphans ()
 
 -- | API server
-server :: Context -> Server FutuHoursAPI
+server :: Ctx -> Server FutuHoursAPI
 server ctx = pure "Hello to futuhours api"
     :<|> addPlanmillApiKey ctx
     :<|> getBalances ctx
@@ -64,11 +64,11 @@ server ctx = pure "Hello to futuhours api"
 -------------------------------------------------------------------------------
 
 -- | Server with docs and cache and status
-server' :: DynMapCache -> Context -> Server FutuHoursAPI'
+server' :: DynMapCache -> Ctx -> Server FutuHoursAPI'
 server' cache ctx = futuriceApiServer cache futuhoursAPI (server ctx)
 
 -- | Wai application
-app :: DynMapCache -> Context -> Application
+app :: DynMapCache -> Ctx -> Application
 app cache ctx = simpleCors $ serve futuhoursAPI' (server' cache ctx)
 
 defaultableEndpoints :: [SomeDefaultableEndpoint]
@@ -87,7 +87,7 @@ defaultMain = do
             , PM.cfgApiKey  = cfgPlanmillSignature
             , PM.cfgBaseUrl = cfgPlanmillUrl
             }
-    -- Context
+    -- Ctx
     postgresPool <- createPool (Postgres.connect cfgPostgresConnInfo) Postgres.close 1 10 5
     planmillUserLookup <- withResource postgresPool $ \conn ->
         planMillUserIds pmCfg conn cfgFumToken cfgFumBaseurl cfgFumList
@@ -98,7 +98,7 @@ defaultMain = do
                 pure $ DMap.insert (defEndTag de) (Compose v) m
         in foldM f DMap.empty defaultableEndpoints
 
-    let ctx = Context pmCfg postgresPool planmillUserLookup precalcEndpoints
+    let ctx = Ctx pmCfg postgresPool planmillUserLookup precalcEndpoints
 
     -- Cron
     cron <- newCron ()
