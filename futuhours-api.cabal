@@ -40,8 +40,8 @@ library
     , bytestring
     , cassava
     , containers
-    , dependent-map
-    , dependent-sum >=0.2.1.0 && <0.3
+    , dependent-map >=0.2.1.0 && <0.3
+    , dependent-sum
     , either
     , exceptions
     , fum-client
