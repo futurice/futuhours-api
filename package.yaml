@@ -28,7 +28,7 @@ library:
     - cassava
     - containers
     - dependent-map
-    - dependent-sum
+    - dependent-sum >=0.2.1.0 && <0.3
     - either
     - exceptions
     - fum-client

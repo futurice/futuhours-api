@@ -1,4 +1,4 @@
--- This file has been generated from package.yaml by hpack version 0.9.0.
+-- This file has been generated from package.yaml by hpack version 0.11.2.
 --
 -- see: https://github.com/sol/hpack
 
@@ -41,7 +41,7 @@ library
     , cassava
     , containers
     , dependent-map
-    , dependent-sum
+    , dependent-sum >=0.2.1.0 && <0.3
     , either
     , exceptions
     , fum-client
