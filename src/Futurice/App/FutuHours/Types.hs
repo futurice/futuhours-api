@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP                   #-}
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE DeriveDataTypeable    #-}
 {-# LANGUAGE DeriveGeneric         #-}
@@ -69,7 +70,11 @@ import Futurice.App.FutuHours.Orphans ()
 -------------------------------------------------------------------------------
 
 camelTo :: String -> String
+#if MIN_VERSION_aeson(0,10,0)
+camelTo = Aeson.camelTo2 '_'
+#else
 camelTo = Aeson.camelTo '_'
+#endif
 
 -------------------------------------------------------------------------------
 -- UserId - deprecated
@@ -347,10 +352,11 @@ instance ToSchema MissingHour where declareNamedSchema = sopDeclareNamedSchema
 -------------------------------------------------------------------------------
 
 data PowerUser = PowerUser
-    { powerUserFirst :: !Text
-    , powerUserLast  :: !Text
-    , powerUserTeam  :: !Text
-    , powerUserStart :: !(Maybe Day)
+    { powerUserUsername :: !FUMUsername
+    , powerUserFirst    :: !Text
+    , powerUserLast     :: !Text
+    , powerUserTeam     :: !Text
+    , powerUserStart    :: !(Maybe Day)
     }
     deriving (Eq, Ord, Show, Typeable, Generic)
 
