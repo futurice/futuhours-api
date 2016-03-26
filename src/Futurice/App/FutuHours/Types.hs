@@ -43,8 +43,6 @@ import Prelude          ()
 import Control.Arrow     (first)
 import Data.Aeson.Extra  (FromJSON (..), M, ToJSON (..), Value (..), object,
                           (.=))
-import Data.Aeson.TH     (Options (..), defaultOptions, deriveJSON)
-import Data.Char         (toLower)
 import Data.Csv          (DefaultOrdered (..), FromRecord (..), ToField (..),
                           ToNamedRecord (..))
 import Data.GADT.Compare ((:~:) (..), GCompare (..), GEq (..), GOrdering (..))
@@ -101,7 +99,11 @@ newtype FUMUsername = FUMUsername Text
 getFUMUsername :: FUMUsername -> Text
 getFUMUsername (FUMUsername name) = name
 
-instance ToJSON FUMUsername
+instance ToJSON FUMUsername where
+    toJSON (FUMUsername n) = toJSON n
+#if MIN_VERSION_aeson(0,10,0)
+    toEncoding (FUMUsername n) = toEncoding n
+#endif
 instance ToSchema FUMUsername
 instance ToParamSchema FUMUsername
 
@@ -140,7 +142,11 @@ instance ToParamSchema FUMUsernamesParam where
 newtype PlanmillApiKey = PlanmillApiKey Text
     deriving (Eq, Ord, Show, Typeable, Generic)
 
-instance ToJSON PlanmillApiKey
+instance ToJSON PlanmillApiKey where
+    toJSON (PlanmillApiKey k) = toJSON k
+#if MIN_VERSION_aeson(0,10,0)
+    toEncoding (PlanmillApiKey k) = toEncoding k
+#endif
 instance FromJSON PlanmillApiKey
 instance ToSchema PlanmillApiKey
 
@@ -169,8 +175,10 @@ data Timereport = Timereport
     }
     deriving (Generic)
 
-instance ToJSON Timereport
-instance ToSchema Timereport
+deriveGeneric ''Timereport
+
+instance ToJSON Timereport where toJSON = sopToJSON
+instance ToSchema Timereport where declareNamedSchema = sopDeclareNamedSchema
 
 -------------------------------------------------------------------------------
 -- Balance
@@ -182,8 +190,10 @@ data Balance = Balance
     }
     deriving (Eq, Ord, Show, Typeable, Generic)
 
-instance ToJSON Balance
-instance ToSchema Balance
+deriveGeneric ''Balance
+
+instance ToJSON Balance where toJSON = sopToJSON
+instance ToSchema Balance where declareNamedSchema = sopDeclareNamedSchema
 
 -------------------------------------------------------------------------------
 -- Project
@@ -197,11 +207,10 @@ data Project = Project
 
 instance Hashable Project
 
-$(deriveJSON
-    defaultOptions{ fieldLabelModifier = map toLower . drop 7 }
-    ''Project)
+deriveGeneric ''Project
 
-instance ToSchema Project
+instance ToJSON Project where toJSON = sopToJSON
+instance ToSchema Project where declareNamedSchema = sopDeclareNamedSchema
 
 -------------------------------------------------------------------------------
 -- Envelope

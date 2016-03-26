@@ -7,7 +7,7 @@ before_install:
 - if [ -n "$CABALVER" ]; then export PATH=/opt/cabal/$CABALVER/bin:$PATH; fi
 - export PATH=~/.local/bin:$PATH
 - if [ ! -e ~/.local/bin/stack ]; then mkdir -p ~/.local/bin; travis_retry curl -L
-  https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1
+  https://github.com/commercialhaskell/stack/releases/download/v1.0.2/stack-1.0.2-linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1
   -C ~/.local/bin '*/stack'; fi
 - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo
   '?')]"
@@ -48,6 +48,24 @@ matrix:
         - ghc-7.10.2
         - libgmp-dev
     compiler: ! ': # ghc-7.10.2 stack-lts-3.yaml'
+  - env: GHCVER=7.10.3 STACK_YAML=stack-lts-4.yaml PEDANTIC=YES
+    addons:
+      apt:
+        sources:
+        - hvr-ghc
+        packages:
+        - ghc-7.10.3
+        - libgmp-dev
+    compiler: ! ': # ghc-7.10.3 stack-lts-4.yaml'
+  - env: GHCVER=7.10.3 STACK_YAML=stack-lts-5.yaml PEDANTIC=YES
+    addons:
+      apt:
+        sources:
+        - hvr-ghc
+        packages:
+        - ghc-7.10.3
+        - libgmp-dev
+    compiler: ! ': # ghc-7.10.3 stack-lts-5.yaml'
 branches:
   only:
   - master
