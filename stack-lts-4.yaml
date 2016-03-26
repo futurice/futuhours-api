@@ -1,0 +1,73 @@
+resolver: lts-4.2
+packages:
+- '.'
+- location:
+    git: https://github.com/futurice/haskell-fum-client.git
+    commit: 50dea8750e538eefdda563a13f6b8e7b53291087
+  extra-dep: true
+- location:
+    git: https://github.com/futurice/haskell-futulogo.git
+    commit: 31b7d957374e71fe2f5e4f3835880bc88351f9e5
+  extra-dep: true
+- location:
+    git: https://github.com/futurice/haskell-futurice-prelude.git
+    commit: bb7149e36a3b8189c1c7dba1d793b0dce94555f3
+  extra-dep: true
+- location:
+    git: https://github.com/futurice/haskell-monad-http.git
+    commit: 2169a95213ca2aec78bd43c3e81845b6c53d48a1
+  extra-dep: true
+- location:
+    git: https://github.com/futurice/haskell-planmill-client.git
+    commit: 111b174c4bc91d5604248f96ae03d42989675e8a
+  extra-dep: true
+- location:
+    git: https://github.com/futurice/haskell-servant-cache.git
+    commit: 3f218a85f23c707524c5d0c6598099157a8626cc
+  extra-dep: true
+- location:
+    git: https://github.com/futurice/haskell-servant-status.git
+    commit: 08289741f58916ec0adef6b49c4a35cf94ebb290
+  extra-dep: true
+- location:
+    git: https://github.com/phadej/generics-sop-lens.git
+    commit: 8ad8e0f998bc4fd9199cb1b0a4be812e764d63dc
+  extra-dep: true
+- location:
+    git: https://github.com/phadej/servant-swagger-ui.git
+    commit: 5f484f10d2182f917b0c3c094daee5d6e54e8a4e
+  extra-dep: true
+extra-deps:
+- aeson-compat-0.3.1.0
+- aeson-extra-0.3.1.0
+- ansi-pretty-0.1.2.0
+- base-compat-0.9.0
+- binary-orphans-0.1.4.0
+- binary-tagged-0.1.3.1
+- composition-extra-2.0.0
+- control-monad-omega-0.3.1
+- generics-sop-0.2.1.0
+- hashable-time-0.2
+- iso8601-time-0.1.4
+- JuicyPixels-3.2.7
+- lattices-1.5.0
+- monad-http-0.1.0.0
+- monad-time-0.1
+- monadcryptorandom-0.7.0
+- recursion-schemes-4.1.2
+- regex-applicative-text-0.1.0.1
+- servant-0.5
+- servant-blaze-0.5
+- servant-cassava-0.5
+- servant-docs-0.5
+- servant-JuicyPixels-0.3.0.1
+- servant-lucid-0.5
+- servant-server-0.5
+- servant-swagger-1.0.3
+- strict-base-types-0.5.0
+- swagger2-2.0.2
+- universe-base-1.0.2.1
+- universe-instances-base-1.0
+- universe-reverse-instances-1.0
+- unordered-containers-0.2.7.0
+flags: {}
