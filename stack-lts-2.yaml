@@ -38,7 +38,7 @@ packages:
     commit: 5f484f10d2182f917b0c3c094daee5d6e54e8a4e
   extra-dep: true
 extra-deps:
-- aeson-compat-0.3.1.0
+- aeson-compat-0.3.2.0
 - aeson-extra-0.3.1.1
 - ansi-pretty-0.1.2.0
 - base-compat-0.9.0
@@ -58,9 +58,9 @@ extra-deps:
 - free-4.12.4
 - generics-sop-0.2.1.0
 - hashable-time-0.2
-- hspec-2.2.2
-- hspec-core-2.2.2
-- hspec-discover-2.2.2
+- hspec-2.2.3
+- hspec-core-2.2.3
+- hspec-discover-2.2.3
 - hspec-expectations-0.7.2
 - http-api-data-0.2.2
 - JuicyPixels-3.2.7
