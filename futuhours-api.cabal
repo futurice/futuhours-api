@@ -54,6 +54,7 @@ library
     , http-client-tls
     , lattices >=1.4.1
     , lens
+    , lucid
     , markdown
     , monad-http
     , monad-logger
@@ -73,6 +74,7 @@ library
     , servant-cache
     , servant-cassava
     , servant-docs
+    , servant-lucid
     , servant-server
     , servant-status
     , servant-swagger

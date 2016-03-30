@@ -76,6 +76,7 @@ defaultableEndpoints =
     [ SDE powerAbsencesEndpoint
     , SDE powerUsersEndpoint
     , SDE missingHoursListEndpoint
+    , SDE balanceReportEndpoint
     ]
 
 defaultMain :: IO ()

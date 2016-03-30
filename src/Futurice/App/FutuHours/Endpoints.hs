@@ -16,6 +16,7 @@ module Futurice.App.FutuHours.Endpoints (
     getProjects,
     getTimereports,
     getBalances,
+    balanceReportEndpoint,
     -- * Reports
     getMissingHoursReport,
     getMissingHoursReportList,
@@ -38,6 +39,7 @@ import Data.Aeson.Extra                 (M (..))
 import Data.BinaryFromJSON              (BinaryFromJSON)
 import Data.List                        (nub, sortBy)
 import Data.Maybe                       (fromJust)
+import Data.Monoid (Sum (..))
 import Data.Ord                         (comparing)
 import Data.Pool                        (withResource)
 import Data.Time                        (UTCTime (..), addDays)
@@ -56,7 +58,7 @@ import qualified Data.Vector         as V
 
 import Futurice.App.FutuHours.Context
 import Futurice.App.FutuHours.PlanMill
-import Futurice.App.FutuHours.Reports.MissingHours (missingHours)
+import Futurice.App.FutuHours.Reports.MissingHours
 import Futurice.App.FutuHours.Types
 import Futurice.App.FutuHours.Precalc
 
@@ -111,14 +113,39 @@ getProjects Ctx { ctxPlanmillCfg = cfg } (UserId uid) =
     pmToFh :: PM.ReportableAssignment -> Project
     pmToFh PM.ReportableAssignment{..} = Project raProject raProjectName
 
-getBalances :: MonadIO m => Ctx -> m (V.Vector Balance)
-getBalances ctx = executeCachedAdminPlanmill ctx p $
-    V.fromList <$> traverse getBalance (HM.toList (ctxPlanmillUserLookup ctx))
+getBalances :: Ctx -> ExceptT ServantErr IO BalanceReport
+getBalances = servantEndpoint balanceReportEndpoint
+
+balanceReportEndpoint
+    :: DefaultableEndpoint '[] () BalanceReport
+balanceReportEndpoint = DefaultableEndpoint
+    { defEndTag = EBalanceReport
+    , defEndDefaultParsedParam = pure ()
+    , defEndDefaultParams = Nil
+    , defEndParseParams = \Nil -> pure ()
+    , defEndAction = balanceReport
+    }
   where
-    p = Proxy :: Proxy '[PM.TimeBalance]
-    getBalance (fumId, pmId) = do
-        PM.TimeBalance balanceMinutes <- planmillAction $ PM.userTimeBalance pmId
-        pure $ Balance fumId (round $ balanceMinutes / 60)
+    balanceReport :: Ctx -> () -> IO BalanceReport
+    balanceReport ctx () = do
+        interval <- getInterval
+        executeCachedAdminPlanmill ctx p $
+            BalanceReport . V.fromList <$>
+                traverse (getBalance interval) (HM.toList (ctxPlanmillUserLookup ctx))
+      where
+        p = Proxy :: Proxy '[ PM.TimeBalance, PM.User, PM.Team, PM.Timereports, PM.UserCapacities, PM.Meta ]
+
+        getInterval = do
+            b <- getCurrentDayInFinland
+            let a = beginningOfPrevMonth b
+            return (fromJust $ PM.mkInterval a b)
+
+        getBalance interval (fumId, pmId) = do
+            mh <- missingHoursForUser interval pmId
+            let mh' = getSum . foldMap Sum . getMap . missingHoursDays $ mh
+            let name = missingHoursName mh
+            PM.TimeBalance balanceMinutes <- planmillAction $ PM.userTimeBalance pmId
+            pure $ Balance fumId name (round $ balanceMinutes / 60) (round mh')
 
 getLegacyUsers
     :: (MonadIO m, MonadError ServantErr m)

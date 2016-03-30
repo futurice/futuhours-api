@@ -18,7 +18,6 @@ module Futurice.App.FutuHours.Types (
     PlanmillUserLookupTable,
     PlanmillUserIdLookupTable,
     Timereport(..),
-    Balance(..),
     Envelope(..),
     User(..),
     Hour(..),
@@ -28,6 +27,9 @@ module Futurice.App.FutuHours.Types (
     unMissingHoursReport,
     MissingHours(..),
     MissingHour(..),
+    -- ** Balance
+    BalanceReport(..),
+    Balance(..),
     -- * Power
     PowerUser(..),
     PowerAbsence(..),
@@ -46,9 +48,11 @@ import Data.Aeson.Extra  (FromJSON (..), M, ToJSON (..), Value (..), object,
 import Data.Csv          (DefaultOrdered (..), FromRecord (..), ToField (..),
                           ToNamedRecord (..))
 import Data.GADT.Compare ((:~:) (..), GCompare (..), GEq (..), GOrdering (..))
+import Data.List         (sortBy)
 import Data.Swagger      (ToParamSchema, ToSchema (..))
 import Futurice.Generics (sopDeclareNamedSchema, sopHeaderOrder, sopParseJSON,
                           sopParseRecord, sopToJSON, sopToNamedRecord)
+import Lucid
 import Servant           (Capture, FromHttpApiData (..))
 import Servant.Docs      (DocCapture (..), ToCapture (..))
 
@@ -87,7 +91,7 @@ instance ToCapture (Capture "userid" UserId) where
     toCapture _ = DocCapture "userid" "PlanMill userid"
 
 instance FromHttpApiData UserId where
-    parseUrlPiece = fmap UserId . parseUrlPiece 
+    parseUrlPiece = fmap UserId . parseUrlPiece
 
 -------------------------------------------------------------------------------
 -- FUMUsername
@@ -111,7 +115,7 @@ instance ToCapture (Capture "fum-id" FUMUsername) where
     toCapture _ = DocCapture "fum-id" "FUM username"
 
 instance FromHttpApiData FUMUsername where
-    parseUrlPiece = fmap FUMUsername . parseUrlPiece 
+    parseUrlPiece = fmap FUMUsername . parseUrlPiece
 
 instance Postgres.ToField FUMUsername where
     toField (FUMUsername name) = Postgres.toField name
@@ -123,6 +127,10 @@ instance Hashable FUMUsername
 
 instance ToField FUMUsername where
     toField = toField.  getFUMUsername
+
+instance ToHtml FUMUsername where
+    toHtml = toHtml . getFUMUsername
+    toHtmlRaw = toHtmlRaw . getFUMUsername
 
 -- | List of users
 newtype FUMUsernamesParam = FUMUsernamesParam
@@ -185,8 +193,10 @@ instance ToSchema Timereport where declareNamedSchema = sopDeclareNamedSchema
 -------------------------------------------------------------------------------
 
 data Balance = Balance
-    { balanceUser  :: !FUMUsername
-    , balanceHours :: !Int
+    { balanceUser         :: !FUMUsername
+    , balanceName         :: !Text
+    , balanceHours        :: !Int
+    , balanceMissingHours :: !Int
     }
     deriving (Eq, Ord, Show, Typeable, Generic)
 
@@ -194,6 +204,45 @@ deriveGeneric ''Balance
 
 instance ToJSON Balance where toJSON = sopToJSON
 instance ToSchema Balance where declareNamedSchema = sopDeclareNamedSchema
+
+data BalanceReport = BalanceReport
+    { balanceReportData :: !(Vector Balance)
+    }
+
+deriveGeneric ''BalanceReport
+
+instance ToJSON BalanceReport where toJSON = sopToJSON
+instance ToSchema BalanceReport where declareNamedSchema = sopDeclareNamedSchema
+
+instance ToHtml BalanceReport where
+    toHtml (BalanceReport vs) = doctypehtml_ $ do
+      head_ $ do
+          title_ $ "Hour balance report"
+          style_ $ T.unlines
+              [ ".emphasize td { font-weight: bold; background: #eee }"
+              , ".emphasize2 td { font-style: italic; background: #efe; }"
+              ]
+      body_ $ do
+          h1_ $ "Hour balance report"
+          table_ $ do
+              tr_ $ do
+                  th_ "Username"
+                  th_ "Name"
+                  th_ "Balance hours"
+                  th_ "Missing hours"
+                  th_ "Sum (balance + missing)"
+              flip traverse_ (sortBy (compare `on` balanceUser) . toList $ vs) $ \(Balance username name hours missing) -> do
+                  let diff = hours + missing
+                  let cls | diff <= -20 || diff >= 40   = "emphasize"
+                          | hours <= -20 || hours >= 40 = "emphasize2"
+                          | otherwise                   = "normal"
+                  tr_ [class_ cls] $ do
+                      td_ $ toHtmlRaw username
+                      td_ $ toHtmlRaw name
+                      td_ $ toHtmlRaw $ show hours
+                      td_ $ toHtmlRaw $ show missing
+                      td_ $ toHtmlRaw $ show diff
+    toHtmlRaw = toHtml
 
 -------------------------------------------------------------------------------
 -- Project
@@ -402,12 +451,14 @@ data EndpointTag a where
     -- ^ Users in planmill with some additional information
     EPowerAbsences    :: EndpointTag (Vector PowerAbsence)
     -- ^ Absences in next 365 days
+    EBalanceReport    :: EndpointTag BalanceReport
     deriving (Typeable)
 
 instance GEq EndpointTag where
     geq EMissingHoursList EMissingHoursList = Just Refl
     geq EPowerUsers       EPowerUsers       = Just Refl
     geq EPowerAbsences    EPowerAbsences    = Just Refl
+    geq EBalanceReport    EBalanceReport    = Just Refl
     geq _ _ = Nothing
 
 instance GCompare EndpointTag where
@@ -418,3 +469,6 @@ instance GCompare EndpointTag where
     gcompare EPowerUsers       _                 = GLT
     gcompare _                 EPowerUsers       = GGT
     gcompare EPowerAbsences    EPowerAbsences    = GEQ
+    gcompare EPowerAbsences    _                 = GLT
+    gcompare _                 EPowerAbsences    = GGT
+    gcompare EBalanceReport    EBalanceReport    = GEQ
