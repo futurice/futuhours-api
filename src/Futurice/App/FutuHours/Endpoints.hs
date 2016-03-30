@@ -383,7 +383,7 @@ executeUncachedAdminPlanmill
     -> m a
 executeUncachedAdminPlanmill ctx _ action =
     liftIO $ withResource (ctxPostgresPool ctx) $ \conn ->
-        runCachedPlanmillT conn (ctxPlanmillCfg ctx) False action
+        runCachedPlanmillT (ctxDevelopment ctx) conn (ctxPlanmillCfg ctx) False action
 
 executeCachedAdminPlanmill
     :: forall m a as. (MonadIO m, All BinaryFromJSON as, ForallSymbols BinaryFromJSON PM.EnumDesc)
@@ -393,4 +393,4 @@ executeCachedAdminPlanmill
     -> m a
 executeCachedAdminPlanmill ctx _ action =
     liftIO $ withResource (ctxPostgresPool ctx) $ \conn ->
-        runCachedPlanmillT conn (ctxPlanmillCfg ctx) True action
+        runCachedPlanmillT (ctxDevelopment ctx) conn (ctxPlanmillCfg ctx) True action
