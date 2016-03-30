@@ -91,7 +91,7 @@ defaultMain = do
     -- Ctx
     postgresPool <- createPool (Postgres.connect cfgPostgresConnInfo) Postgres.close 1 10 5
     planmillUserLookup <- withResource postgresPool $ \conn ->
-        planMillUserIds pmCfg conn cfgFumToken cfgFumBaseurl cfgFumList
+        planMillUserIds cfgDevelopment pmCfg conn cfgFumToken cfgFumBaseurl cfgFumList
 
     precalcEndpoints <- atomically $
         let f m (SDE de) = do
@@ -99,7 +99,7 @@ defaultMain = do
                 pure $ DMap.insert (defEndTag de) (Compose v) m
         in foldM f DMap.empty defaultableEndpoints
 
-    let ctx = Ctx pmCfg postgresPool planmillUserLookup precalcEndpoints
+    let ctx = Ctx cfgDevelopment pmCfg postgresPool planmillUserLookup precalcEndpoints
 
     -- Cron
     cron <- newCron ()

@@ -20,16 +20,18 @@ import qualified PlanMill as PM
 import Futurice.App.FutuHours.PlanMill
 import Futurice.App.FutuHours.Types
 
+-- | TODO use MonadReader with Has* classes
 planMillUserIds
-    :: PM.Cfg
+    :: Bool
+    -> PM.Cfg
     -> Connection
     -> FUM.AuthToken
     -> FUM.BaseUrl
     -> FUM.ListName
     -> IO PlanmillUserIdLookupTable
-planMillUserIds cfg conn authToken baseUrl listName = do
+planMillUserIds development cfg conn authToken baseUrl listName = do
     manager <- newManager tlsManagerSettings
-    planmillUsers <- runCachedPlanmillT conn cfg True $ PM.planmillAction PM.users
+    planmillUsers <- runCachedPlanmillT development conn cfg True $ PM.planmillAction PM.users
     fumUsers <- FUM.fetchList manager authToken baseUrl listName
     return $ process planmillUsers fumUsers
   where

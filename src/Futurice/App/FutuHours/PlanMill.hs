@@ -55,12 +55,14 @@ runPlanmillT cfg pm =
     evalPlanMill = PM.evalPlanMill
 
 runCachedPlanmillT
-    :: forall a. Connection                    -- ^ Postgres connection
+    :: forall a.
+       Bool                                    -- ^ Development
+    -> Connection                              -- ^ Postgres connection
     -> PM.Cfg                                  -- ^ Planmill config
     -> Bool                                    -- ^ whether to ask cache
     -> PM.GenPlanMillT BinaryFromJSON Stack a  -- ^ Action
     -> IO a
-runCachedPlanmillT conn cfg askCache pm =
+runCachedPlanmillT development conn cfg askCache pm =
     evalHttpT $ runStderrLoggingT $ flip runReaderT cfg $ do
         g <- mkHashDRBG
         flip evalStateT mempty $ flip evalCRandTThrow g $ flip runReaderT cfg $ action
@@ -76,7 +78,7 @@ runCachedPlanmillT conn cfg askCache pm =
                 let fromLocal = MaybeT $ lookupS url
                     fromDb = do
                         $(logDebug) $ "Looking in Postgres cache: " <> url
-                        r' <- MaybeT $ liftIO $ Postgres.singleQuery conn "SELECT data FROM futuhours.cache WHERE path = ? and updated + interval '300 minutes' > current_timestamp;" (Only url)
+                        r' <- MaybeT $ liftIO $ Postgres.singleQuery conn selectQuery (Only url)
                         x <- extract url r'
                         -- Store in current execution cache
                         insertS url x
@@ -84,6 +86,12 @@ runCachedPlanmillT conn cfg askCache pm =
                 in fromLocal <|> fromDb
             maybe evaledPlanMill return r
       where
+        selectQuery :: Postgres.Query
+        selectQuery
+            | development = "SELECT data FROM futuhours.cache WHERE path = ? and updated + interval '300 minutes' > current_timestamp;"
+            | otherwise   = "SELECT data FROM futuhours.cache WHERE path = ? and updated + interval '8 minutes' * (r + 1) > current_timestamp;"
+
+
         url' :: Text
         url' = T.pack $ PM.fromUrlParts (PM.requestUrlParts req)
 

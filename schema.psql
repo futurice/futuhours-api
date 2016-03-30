@@ -6,5 +6,6 @@ create table futuhours.apikeys (
 create table futuhours.cache (
   path TEXT PRIMARY KEY,
   updated TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  r FLOAT NOT NULL DEFAULT random(), -- Used to deterministically decide when entry is outdated
   data BYTEA NOT NULL
 );

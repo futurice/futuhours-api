@@ -11,7 +11,8 @@ import Futurice.App.FutuHours.Types
 
 -- | We probably will have some
 data Ctx = Ctx
-    { ctxPlanmillCfg        :: !Cfg
+    { ctxDevelopment        :: !Bool
+    , ctxPlanmillCfg        :: !Cfg
     , ctxPostgresPool       :: !(Pool Connection)
     , ctxPlanmillUserLookup :: !PlanmillUserIdLookupTable -- ^ *TODO:* refresh this from time to time
     , ctxPrecalcEndpoints   :: !(DMap EndpointTag (Compose TVar Maybe))

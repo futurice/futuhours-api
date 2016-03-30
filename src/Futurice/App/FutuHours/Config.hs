@@ -34,6 +34,7 @@ data Config = Config
     , cfgFumBaseurl        :: !FUM.BaseUrl
     , cfgFumList           :: !FUM.ListName
     , cfgPort              :: !Int
+    , cfgDevelopment       :: !Bool
       -- ^ Port to listen from, default is 'defaultPort'.
     }
     deriving (Show)
@@ -48,6 +49,7 @@ getConfig =
            <*> parseEnvVar "FUM_BASEURL"
            <*> parseEnvVar "FUM_LISTNAME"
            <*> parseEnvVarWithDefault "PORT" defaultPort
+           <*> parseEnvVarWithDefault "DEVELOPMENT" False
 
 getConnectInfo :: IO ConnectInfo
 getConnectInfo = f
@@ -118,3 +120,8 @@ instance FromEnvVar Word64 where
 
 instance FromEnvVar Int where
     fromEnvVar = readMaybe
+
+instance FromEnvVar Bool where
+    fromEnvVar "1" = Just True
+    fromEnvVar "0" = Just False
+    fromEnvVar _   = Nothing
