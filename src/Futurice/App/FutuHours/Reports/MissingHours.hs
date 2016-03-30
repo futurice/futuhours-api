@@ -5,7 +5,10 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 -- | TODO: rename to MissingHours
-module Futurice.App.FutuHours.Reports.MissingHours (missingHours) where
+module Futurice.App.FutuHours.Reports.MissingHours (
+    missingHours,
+    missingHoursForUser,
+    ) where
 
 import Futurice.Prelude
 import Prelude          ()
@@ -20,6 +23,52 @@ import qualified Data.Map            as Map
 import qualified PlanMill            as PM
 
 import Futurice.App.FutuHours.Types
+
+missingHoursForUser
+    :: ( PM.MonadPlanMill m, Applicative m
+       , PM.MonadPlanMillC m PM.User
+       , PM.MonadPlanMillC m PM.Team
+       , PM.MonadPlanMillC m PM.Timereports
+       , PM.MonadPlanMillC m PM.UserCapacities
+       , PM.MonadPlanMillC m PM.Meta
+       , ForallSymbols (PM.MonadPlanMillC m) PM.EnumDesc
+       )
+    => PM.Interval Day
+    -> PM.UserId
+    -> m MissingHours
+missingHoursForUser interval uid = do
+    u <- PM.planmillAction $ PM.user uid
+    t <- traverse (PM.planmillAction . PM.team) (PM.uTeam u)
+    c <- PM.enumerationValue (PM.uContractType u) "Unknown Contract"
+    uc <- PM.planmillAction $ PM.userCapacity interval uid
+    let uc' = capacities uc
+    tr <- splitTimereportsFromIntervalFor interval uid
+    let tr' = reportedDays tr
+    return $ MissingHours
+        { missingHoursName     = PM.uFirstName u <> " " <> PM.uLastName u
+        , missingHoursTeam     = maybe "Unknown Team" PM.tName t
+        , missingHoursContract = c
+        , missingHoursDays     = M (Map.differenceWith minus uc' tr')
+        }
+  where
+    -- For now show only days without any hour markings
+    minus :: Double -> Double -> Maybe Double
+    minus a b
+        | b > 0      = Nothing
+        | otherwise  = Just a
+
+    capacities :: PM.UserCapacities -> Map Day Double
+    capacities
+        = Map.fromList
+        . filter (isPositive . snd)
+        . map (\x -> (PM.userCapacityDate x, fromIntegral (PM.userCapacityAmount x) / 60.0))
+        . toList
+
+    reportedDays :: PM.Timereports -> Map Day Double
+    reportedDays
+        = Map.fromList
+        . map (\x -> (PM.trStart x, PM.trAmount x / 60.0))
+        . toList
 
 -- |
 --
@@ -42,7 +91,7 @@ missingHours
     -> m MissingHoursReport
 missingHours pmUsers interval usernames
     = fmap (MissingHoursReport . HM.fromList)
-    . (traverse . traverse) f
+    . (traverse . traverse) (missingHoursForUser interval)
     . mapMaybe g
     $ usernames'
   where
@@ -50,41 +99,6 @@ missingHours pmUsers interval usernames
     usernames' = case toList usernames of
         [] -> HM.keys pmUsers
         us -> us
-
-    f :: PM.UserId -> m MissingHours
-    f uid = do
-        u <- PM.planmillAction $ PM.user uid
-        t <- traverse (PM.planmillAction . PM.team) (PM.uTeam u)
-        c <- PM.enumerationValue (PM.uContractType u) "Unknown Contract"
-        uc <- PM.planmillAction $ PM.userCapacity interval uid
-        let uc' = capacities uc
-        tr <- splitTimereportsFromIntervalFor interval uid
-        let tr' = reportedDays tr
-        return $ MissingHours
-            { missingHoursName     = PM.uFirstName u <> " " <> PM.uLastName u
-            , missingHoursTeam     = maybe "Unknown Team" PM.tName t
-            , missingHoursContract = c
-            , missingHoursDays     = M (Map.differenceWith minus uc' tr')
-            }
-
-    -- For now show only days without any hour markings
-    minus :: Double -> Double -> Maybe Double
-    minus a b
-        | b > 0      = Nothing
-        | otherwise  = Just a
-
-    capacities :: PM.UserCapacities -> Map Day Double
-    capacities
-        = Map.fromList
-        . filter (isPositive . snd)
-        . map (\x -> (PM.userCapacityDate x, fromIntegral (PM.userCapacityAmount x) / 60.0))
-        . toList
-
-    reportedDays :: PM.Timereports -> Map Day Double
-    reportedDays
-        = Map.fromList
-        . map (\x -> (PM.trStart x, PM.trAmount x / 60.0))
-        . toList
 
     g :: FUMUsername -> Maybe (FUMUsername, PM.UserId)
     g n = (,) n <$> HM.lookup n pmUsers
