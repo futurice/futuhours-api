@@ -346,7 +346,7 @@ powerAbsencesEndpoint = DefaultableEndpoint
                )
             => PM.Absence -> n PowerAbsence
         toPowerAbsence' ab = do
-            case PM.mkInterval (utctDay $ PM.absenceStart ab) (utctDay $ PM.absenceFinish ab) of
+            case PM.mkInterval (PM.absenceStart ab) (PM.absenceFinish ab) of
                 Just interval' -> do
                     uc <- PM.planmillAction $ PM.userCapacity interval' (PM.absencePerson ab)
                     return $ toPowerAbsence ab uc
@@ -356,8 +356,8 @@ powerAbsencesEndpoint = DefaultableEndpoint
         toPowerAbsence :: PM.Absence -> PM.UserCapacities -> PowerAbsence
         toPowerAbsence ab uc = PowerAbsence
             { powerAbsenceUsername     = reverseLookup (PM.absencePerson ab) (ctxPlanmillUserLookup ctx)
-            , powerAbsenceStart        = utctDay $ PM.absenceStart ab
-            , powerAbsenceEnd          = utctDay $ PM.absenceFinish ab
+            , powerAbsenceStart        = PM.absenceStart ab
+            , powerAbsenceEnd          = PM.absenceFinish ab
             , powerAbsencePlanmillId   = ab ^. PM.identifier
             , powerAbsenceCapacities   = M uc'
             , powerAbsenceBusinessDays = length uc'
