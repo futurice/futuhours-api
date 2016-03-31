@@ -325,22 +325,49 @@ powerAbsencesEndpoint = DefaultableEndpoint
         :: Ctx -> PM.Interval Day -> IO (Vector PowerAbsence)
     powerAbsences ctx interval = executeCachedAdminPlanmill ctx p getPowerAbsences'
       where
-        p = Proxy :: Proxy '[PM.Absences]
+        p = Proxy :: Proxy '[PM.Absences, PM.UserCapacities]
 
         getPowerAbsences'
-            :: (Applicative n, PM.MonadPlanMill n, PM.MonadPlanMillC n PM.Absences)
+            :: ( Applicative n, PM.MonadPlanMill n
+               , PM.MonadPlanMillC n PM.Absences
+               , PM.MonadPlanMillC n PM.UserCapacities
+               )
             => n (Vector PowerAbsence)
-        getPowerAbsences' =
-            toPowerAbsence <$$>
-                PM.planmillAction (PM.absencesFromInterval (toResultInterval interval))
+        getPowerAbsences' = do
+            absences <- PM.planmillAction (PM.absencesFromInterval (toResultInterval interval))
+            traverse toPowerAbsence' absences
 
-        toPowerAbsence :: PM.Absence -> PowerAbsence
-        toPowerAbsence ab = PowerAbsence
-            { powerAbsenceUsername   = reverseLookup (PM.absencePerson ab) (ctxPlanmillUserLookup ctx)
-            , powerAbsenceStart      = utctDay $ PM.absenceStart ab
-            , powerAbsenceEnd        = utctDay $ PM.absenceFinish ab
-            , powerAbsencePlanmillId = ab ^. PM.identifier
+        toPowerAbsence'
+            :: ( Applicative n, PM.MonadPlanMill n
+               , PM.MonadPlanMillC n PM.UserCapacities
+               )
+            => PM.Absence -> n PowerAbsence
+        toPowerAbsence' ab = do
+            case PM.mkInterval (utctDay $ PM.absenceStart ab) (utctDay $ PM.absenceFinish ab) of
+                Just interval' -> do
+                    uc <- PM.planmillAction $ PM.userCapacity interval' (PM.absencePerson ab)
+                    return $ toPowerAbsence ab uc
+                Nothing ->
+                    return $ toPowerAbsence ab mempty
+
+        toPowerAbsence :: PM.Absence -> PM.UserCapacities -> PowerAbsence
+        toPowerAbsence ab uc = PowerAbsence
+            { powerAbsenceUsername     = reverseLookup (PM.absencePerson ab) (ctxPlanmillUserLookup ctx)
+            , powerAbsenceStart        = utctDay $ PM.absenceStart ab
+            , powerAbsenceEnd          = utctDay $ PM.absenceFinish ab
+            , powerAbsencePlanmillId   = ab ^. PM.identifier
+            , powerAbsenceCapacities   = M uc'
+            , powerAbsenceBusinessDays = length uc'
             }
+          where
+            uc' = capacities uc
+
+    capacities :: PM.UserCapacities -> Map Day Double
+    capacities
+        = Map.fromList
+        . filter ((> 0) . snd)
+        . map (\x -> (PM.userCapacityDate x, fromIntegral (PM.userCapacityAmount x) / 60.0))
+        . toList
 
 getPowerAbsences
     :: Ctx -> Maybe Day -> Maybe Day -> ExceptT ServantErr IO (Vector PowerAbsence)

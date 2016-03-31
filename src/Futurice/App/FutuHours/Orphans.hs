@@ -42,3 +42,6 @@ instance ToField (Identifier a) where
 instance FromField Day where
     parseField s = either (fail . show) return $
         parse day "FromField Day" s
+
+instance ToField (M a) where
+    toField _ = ""

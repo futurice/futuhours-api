@@ -426,10 +426,12 @@ instance ToJSON PowerUser where toJSON = sopToJSON
 instance ToSchema PowerUser where declareNamedSchema = sopDeclareNamedSchema
 
 data PowerAbsence = PowerAbsence
-    { powerAbsenceUsername   :: !(Maybe FUMUsername)
-    , powerAbsenceStart      :: !Day
-    , powerAbsenceEnd        :: !Day
-    , powerAbsencePlanmillId :: !PM.AbsenceId
+    { powerAbsenceUsername     :: !(Maybe FUMUsername)
+    , powerAbsenceStart        :: !Day
+    , powerAbsenceEnd          :: !Day
+    , powerAbsencePlanmillId   :: !PM.AbsenceId
+    , powerAbsenceCapacities   :: !(M (Map Day Double))
+    , powerAbsenceBusinessDays :: !Int
     }
     deriving (Eq, Ord, Show, Typeable, Generic)
 
