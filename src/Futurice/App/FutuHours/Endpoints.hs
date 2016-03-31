@@ -282,23 +282,26 @@ powerUsersEndpoint = DefaultableEndpoint
     powerUsers :: Ctx -> () -> IO (Vector PowerUser)
     powerUsers ctx () = executeCachedAdminPlanmill ctx p $ traverse powerUser pmUsers
       where
-        p = Proxy :: Proxy '[PM.User, PM.Team]
+        p = Proxy :: Proxy '[PM.User, PM.Team, PM.Meta]
         pmUsers = V.fromList $ HM.toList $ ctxPlanmillUserLookup ctx
 
         powerUser
             :: ( Applicative n, PM.MonadPlanMill n
-               , PM.MonadPlanMillC n PM.User, PM.MonadPlanMillC n PM.Team
+               , All (PM.MonadPlanMillC n) '[PM.User, PM.Team, PM.Meta]
+               , ForallSymbols (PM.MonadPlanMillC n) PM.EnumDesc
                )
             => (FUMUsername, PM.UserId) -> n PowerUser
         powerUser (fumLogin, uid) = do
             u <- PM.planmillAction $ PM.user uid
             t <- traverse (PM.planmillAction . PM.team) (PM.uTeam u)
+            a <- PM.enumerationValue (PM.uPassive u) "-"
             return $ PowerUser
                 { powerUserUsername = fumLogin
                 , powerUserFirst    = PM.uFirstName u
                 , powerUserLast     = PM.uLastName u
                 , powerUserTeam     = maybe "Unknown Team" PM.tName t
                 , powerUserStart    = utctDay <$> PM.uHireDate u
+                , powerUserActive   = a
                 }
 
 getPowerUsers :: Ctx -> ExceptT ServantErr IO (Vector PowerUser)

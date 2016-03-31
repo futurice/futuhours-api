@@ -5,6 +5,7 @@ module Futurice.App.FutuHours.PlanMillUserIds (planMillUserIds) where
 import Futurice.Prelude
 import Prelude          ()
 
+import Control.Lens                (_1)
 import Data.Maybe                  (mapMaybe)
 import Database.PostgreSQL.Simple  (Connection)
 import Network.HTTP.Client         (newManager)
@@ -31,11 +32,13 @@ planMillUserIds
     -> IO PlanmillUserIdLookupTable
 planMillUserIds development cfg conn authToken baseUrl listName = do
     manager <- newManager tlsManagerSettings
-    planmillUsers <- runCachedPlanmillT development conn cfg True $ PM.planmillAction PM.users
+    planmillUsers <- runCachedPlanmillT development conn cfg True $ do
+        us <- PM.planmillAction PM.users
+        traverse (\u -> (,) <$> pure u <*> PM.enumerationValue (PM.uPassive u) "-") us
     fumUsers <- FUM.fetchList manager authToken baseUrl listName
     return $ process planmillUsers fumUsers
   where
-    process :: Vector PM.User -> Vector FUM.User -> PlanmillUserIdLookupTable
+    process :: Vector (PM.User, Text) -> Vector FUM.User -> PlanmillUserIdLookupTable
     process planmillUsers
         = HM.fromList
         . mapMaybe (process' planmillUsers)
@@ -45,14 +48,13 @@ planMillUserIds development cfg conn authToken baseUrl listName = do
     fumUserPredicate :: FUM.User -> Bool
     fumUserPredicate = (FUM.StatusActive ==) . view FUM.userStatus
 
-    process' :: Vector PM.User -> FUM.User -> Maybe (FUMUsername, PM.UserId)
+    process' :: Vector (PM.User, Text) -> FUM.User -> Maybe (FUMUsername, PM.UserId)
     process' planmillUsers fumUser = case V.find p planmillUsers of
-        Nothing           -> Nothing
-        Just planmillUser -> Just (FUMUsername (FUM._getUserName fumUserName), planmillUser ^. PM.identifier)
+        Nothing    -> Nothing
+        Just pair  -> Just (FUMUsername (FUM._getUserName fumUserName), pair ^. _1 . PM.identifier)
       where
         fumUserName = fumUser ^. FUM.userName
         fumUserNameStr = fumUserName ^. FUM.getUserName . from packed
-        p planmillUser = case match ("https://login.futurice.com/openid/" *> many anySym) (PM.uUserName planmillUser) of
-            -- TODO: here we have to use enumerations api later
-            Just name  -> PM.uPassive planmillUser /= Just 1 && name == fumUserNameStr
+        p (planmillUser, status) = case match ("https://login.futurice.com/openid/" *> many anySym) (PM.uUserName planmillUser) of
+            Just name  -> status == "Active" && name == fumUserNameStr
             Nothing    -> False

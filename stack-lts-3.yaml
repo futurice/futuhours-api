@@ -19,11 +19,11 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-planmill-client.git
-    commit: 111b174c4bc91d5604248f96ae03d42989675e8a
+    commit: 25cc9e1cf993cb69a413cb45cdc424164ecbdd7f
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-servant-cache.git
-    commit: 3f218a85f23c707524c5d0c6598099157a8626cc
+    commit: bd59e8bf3bc57960742651944c496e586bfef1b3
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-servant-status.git
