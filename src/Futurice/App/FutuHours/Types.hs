@@ -415,6 +415,7 @@ data PowerUser = PowerUser
     , powerUserLast     :: !Text
     , powerUserTeam     :: !Text
     , powerUserStart    :: !(Maybe Day)
+    , powerUserActive   :: !Text
     }
     deriving (Eq, Ord, Show, Typeable, Generic)
 
