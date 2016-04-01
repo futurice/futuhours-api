@@ -42,17 +42,17 @@ data Config = Config
     deriving (Show)
 
 getConfig :: IO Config
-getConfig =
-    Config <$> parseEnvVar "PLANMILL_BASEURL"
-           <*> parseEnvVar "PLANMILL_ADMIN"
-           <*> parseEnvVar "PLANMILL_SIGNATURE"
-           <*> getConnectInfo
-           <*> parseEnvVar "FUM_TOKEN"
-           <*> parseEnvVar "FUM_BASEURL"
-           <*> parseEnvVar "FUM_LISTNAME"
-           <*> parseEnvVarWithDefault "PORT" defaultPort
-           <*> parseEnvVarWithDefault "DEVELOPMENT" False
-           <*> parseEnvVarWithDefault "LOGLEVEL" LevelInfo
+getConfig = Config
+    <$> parseEnvVar "PLANMILL_BASEURL"
+    <*> parseEnvVar "PLANMILL_ADMIN"
+    <*> parseEnvVar "PLANMILL_SIGNATURE"
+    <*> getConnectInfo
+    <*> parseEnvVar "FUM_TOKEN"
+    <*> parseEnvVar "FUM_BASEURL"
+    <*> parseEnvVar "FUM_LISTNAME"
+    <*> parseEnvVarWithDefault "PORT" defaultPort
+    <*> parseEnvVarWithDefault "DEVELOPMENT" False
+    <*> parseEnvVarWithDefault "LOGLEVEL" LevelInfo
 
 getConnectInfo :: IO ConnectInfo
 getConnectInfo = f
