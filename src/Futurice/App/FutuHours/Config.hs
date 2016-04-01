@@ -8,8 +8,9 @@ module Futurice.App.FutuHours.Config (
 import Futurice.Prelude
 import Prelude          ()
 
-import Data.ByteString    (ByteString)
-import System.Environment (lookupEnv)
+import Control.Monad.Logger (LogLevel (..))
+import Data.ByteString      (ByteString)
+import System.Environment   (lookupEnv)
 
 import Database.PostgreSQL.Simple     (ConnectInfo (..))
 import Database.PostgreSQL.Simple.URL (parseDatabaseUrl)
@@ -19,6 +20,8 @@ import qualified FUM
 import qualified PlanMill.Types.Auth       as PM
 import qualified PlanMill.Types.Identifier as PM
 import qualified PlanMill.Types.User       as PM
+
+import Futurice.App.FutuHours.Types (Development (..))
 
 -- | TODO: split config into two parts
 data Config = Config
@@ -34,22 +37,24 @@ data Config = Config
     , cfgFumBaseurl        :: !FUM.BaseUrl
     , cfgFumList           :: !FUM.ListName
     , cfgPort              :: !Int
-    , cfgDevelopment       :: !Bool
       -- ^ Port to listen from, default is 'defaultPort'.
+    , cfgDevelopment       :: !Development
+    , cfgLogLevel          :: !LogLevel
     }
     deriving (Show)
 
 getConfig :: IO Config
-getConfig =
-    Config <$> parseEnvVar "PLANMILL_BASEURL"
-           <*> parseEnvVar "PLANMILL_ADMIN"
-           <*> parseEnvVar "PLANMILL_SIGNATURE"
-           <*> getConnectInfo
-           <*> parseEnvVar "FUM_TOKEN"
-           <*> parseEnvVar "FUM_BASEURL"
-           <*> parseEnvVar "FUM_LISTNAME"
-           <*> parseEnvVarWithDefault "PORT" defaultPort
-           <*> parseEnvVarWithDefault "DEVELOPMENT" False
+getConfig = Config
+    <$> parseEnvVar "PLANMILL_BASEURL"
+    <*> parseEnvVar "PLANMILL_ADMIN"
+    <*> parseEnvVar "PLANMILL_SIGNATURE"
+    <*> getConnectInfo
+    <*> parseEnvVar "FUM_TOKEN"
+    <*> parseEnvVar "FUM_BASEURL"
+    <*> parseEnvVar "FUM_LISTNAME"
+    <*> parseEnvVarWithDefault "PORT" defaultPort
+    <*> parseEnvVarWithDefault "DEVELOPMENT" Production
+    <*> parseEnvVarWithDefault "LOGLEVEL" LevelInfo
 
 getConnectInfo :: IO ConnectInfo
 getConnectInfo = f
@@ -125,3 +130,16 @@ instance FromEnvVar Bool where
     fromEnvVar "1" = Just True
     fromEnvVar "0" = Just False
     fromEnvVar _   = Nothing
+
+instance FromEnvVar Development where
+    fromEnvVar = fmap f . fromEnvVar
+      where
+        f True  = Development
+        f False = Production
+
+instance FromEnvVar LogLevel where
+    fromEnvVar "DEBUG" = Just LevelDebug
+    fromEnvVar "INFO"  = Just LevelInfo
+    fromEnvVar "WARN"  = Just LevelWarn
+    fromEnvVar "ERROR" = Just LevelError
+    fromEnvVar _       = Nothing

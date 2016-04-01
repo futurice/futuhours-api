@@ -6,6 +6,7 @@
 {-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE StandaloneDeriving    #-}
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE UndecidableInstances  #-}
@@ -35,6 +36,8 @@ module Futurice.App.FutuHours.Types (
     PowerAbsence(..),
     -- * Precalculated endpoints
     EndpointTag(..),
+    -- * Flags
+    Development(..),
     -- * Random
     reverseLookup,
     ) where
@@ -77,6 +80,15 @@ camelTo = Aeson.camelTo2 '_'
 #else
 camelTo = Aeson.camelTo '_'
 #endif
+
+-------------------------------------------------------------------------------
+-- Development
+-------------------------------------------------------------------------------
+
+data Development
+    = Development
+    | Production
+    deriving (Eq, Show)
 
 -------------------------------------------------------------------------------
 -- UserId - deprecated
@@ -475,3 +487,5 @@ instance GCompare EndpointTag where
     gcompare EPowerAbsences    _                 = GLT
     gcompare _                 EPowerAbsences    = GGT
     gcompare EBalanceReport    EBalanceReport    = GEQ
+
+deriving instance Show (EndpointTag a)

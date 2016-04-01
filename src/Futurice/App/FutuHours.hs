@@ -22,6 +22,7 @@ import Servant
 import Servant.Cache.Class         (DynMapCache)
 import Servant.Futurice
 import System.IO                   (hPutStrLn, stderr)
+import Generics.SOP (NP(..), I(..))
 
 import Distribution.Server.Framework.Cron (CronJob (..), JobFrequency (..),
                                            addCronJob, newCron)
@@ -88,10 +89,13 @@ defaultMain = do
             , PM.cfgApiKey  = cfgPlanmillSignature
             , PM.cfgBaseUrl = cfgPlanmillUrl
             }
-    -- Ctx
+    -- Building the Ctx
     postgresPool <- createPool (Postgres.connect cfgPostgresConnInfo) Postgres.close 1 10 5
+
+    -- Ad hoc context to get planmill users
+    let ctx' = I cfgDevelopment :* I pmCfg :* I cfgLogLevel :* Nil
     planmillUserLookup <- withResource postgresPool $ \conn ->
-        planMillUserIds cfgDevelopment pmCfg conn cfgFumToken cfgFumBaseurl cfgFumList
+        planMillUserIds ctx' conn cfgFumToken cfgFumBaseurl cfgFumList
 
     precalcEndpoints <- atomically $
         let f m (SDE de) = do
@@ -99,7 +103,14 @@ defaultMain = do
                 pure $ DMap.insert (defEndTag de) (Compose v) m
         in foldM f DMap.empty defaultableEndpoints
 
-    let ctx = Ctx cfgDevelopment pmCfg postgresPool planmillUserLookup precalcEndpoints
+    let ctx = Ctx
+          { ctxDevelopment = cfgDevelopment
+          , ctxPlanmillCfg = pmCfg
+          , ctxPostgresPool = postgresPool
+          , ctxPlanmillUserLookup = planmillUserLookup
+          , ctxPrecalcEndpoints = precalcEndpoints
+          , ctxLogLevel = cfgLogLevel
+          }
 
     -- Cron
     cron <- newCron ()

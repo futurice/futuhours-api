@@ -1,8 +1,10 @@
 {-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE GADTs               #-}
+{-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE RankNTypes          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell     #-}
 {-# LANGUAGE TypeFamilies        #-}
 {-# LANGUAGE TypeOperators       #-}
 -- | Module for precalculated values.
@@ -12,6 +14,7 @@ import Futurice.Prelude
 import Prelude          ()
 
 import Control.Concurrent.STM     (atomically, readTVar, writeTVar)
+import Control.Monad.Logger       (logInfo, logWarn)
 import Control.Monad.Trans.Class  (MonadTrans (..))
 import Control.Monad.Trans.Except (ExceptT)
 import Data.Functor.Compose       (Compose (..))
@@ -20,6 +23,7 @@ import Generics.SOP.Curry
 import Servant                    (ServantErr)
 
 import qualified Data.Dependent.Map as DMap
+import qualified Data.Text          as T
 
 import Futurice.App.FutuHours.Context
 import Futurice.App.FutuHours.Types
@@ -61,14 +65,18 @@ servantEndpoint de ctx = hCurry endpoint
   where
     endpoint :: NP I xs -> ExceptT ServantErr IO r
     endpoint xs
-        | xs == defEndDefaultParams de = lift $ do
-            l <- lookupEndpoint ctx (defEndTag de)
+        | xs == defEndDefaultParams de = runFutuhoursLoggingT ctx $ do
+            l <- liftIO $ lookupEndpoint ctx (defEndTag de)
             case l of
                 -- Shouldn't happen
                 Nothing -> do
-                    p <- defEndDefaultParsedParam de
-                    defEndAction de ctx p
-                Just r  -> return r
+                    $(logWarn) $ "non-cached endpoint: " <> (T.pack $ show $ defEndTag de)
+                    liftIO $ do
+                        p <- defEndDefaultParsedParam de
+                        defEndAction de ctx p
+                Just r  -> do
+                    $(logInfo) $ "cached endpoint: " <> (T.pack $ show $ defEndTag de)
+                    return r
         | otherwise = do
             p <- defEndParseParams de xs
             lift $ defEndAction de ctx p
