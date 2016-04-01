@@ -21,6 +21,8 @@ import qualified PlanMill.Types.Auth       as PM
 import qualified PlanMill.Types.Identifier as PM
 import qualified PlanMill.Types.User       as PM
 
+import Futurice.App.FutuHours.Types (Development (..))
+
 -- | TODO: split config into two parts
 data Config = Config
     { cfgPlanmillUrl       :: !String
@@ -35,9 +37,9 @@ data Config = Config
     , cfgFumBaseurl        :: !FUM.BaseUrl
     , cfgFumList           :: !FUM.ListName
     , cfgPort              :: !Int
-    , cfgDevelopment       :: !Bool
-    , cfgLogLevel          :: !LogLevel
       -- ^ Port to listen from, default is 'defaultPort'.
+    , cfgDevelopment       :: !Development
+    , cfgLogLevel          :: !LogLevel
     }
     deriving (Show)
 
@@ -51,7 +53,7 @@ getConfig = Config
     <*> parseEnvVar "FUM_BASEURL"
     <*> parseEnvVar "FUM_LISTNAME"
     <*> parseEnvVarWithDefault "PORT" defaultPort
-    <*> parseEnvVarWithDefault "DEVELOPMENT" False
+    <*> parseEnvVarWithDefault "DEVELOPMENT" Production
     <*> parseEnvVarWithDefault "LOGLEVEL" LevelInfo
 
 getConnectInfo :: IO ConnectInfo
@@ -128,6 +130,12 @@ instance FromEnvVar Bool where
     fromEnvVar "1" = Just True
     fromEnvVar "0" = Just False
     fromEnvVar _   = Nothing
+
+instance FromEnvVar Development where
+    fromEnvVar = fmap f . fromEnvVar
+      where
+        f True  = Development
+        f False = Production
 
 instance FromEnvVar LogLevel where
     fromEnvVar "DEBUG" = Just LevelDebug

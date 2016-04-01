@@ -10,8 +10,7 @@ import Futurice.Prelude
 import Prelude          ()
 
 import Control.Monad.Http         (HttpT, evalHttpT)
-import Control.Monad.Logger       (LogLevel (..), LoggingT, MonadLogger,
-                                   filterLogger, logDebug, logWarn,
+import Control.Monad.Logger       (LoggingT, MonadLogger, logDebug, logWarn,
                                    runStderrLoggingT)
 import Control.Monad.Reader       (ReaderT (..))
 import Control.Monad.State.Strict (MonadState, StateT, evalStateT, gets,
@@ -39,6 +38,9 @@ import qualified PlanMill.Operational   as PM (GenPlanMillT, runGenPlanMillT)
 import qualified PlanMill.Types.Request as PM (requestUrlParts)
 import qualified PlanMill.Types.UrlPart as PM (fromUrlParts)
 
+import Futurice.App.FutuHours.Context
+import Futurice.App.FutuHours.Types   (Development (..))
+
 type Stack = ReaderT PM.Cfg :$ LoggingT :$ HttpT IO
 type InnerStack =
     ReaderT PM.Cfg :$ CRandT HashDRBG GenError :$ StateT (PlanMillDynMap Text) :$ Stack
@@ -56,19 +58,19 @@ runPlanmillT cfg pm =
     evalPlanMill = PM.evalPlanMill
 
 runCachedPlanmillT
-    :: forall a.
-       Bool                                    -- ^ Development
+    :: forall a env. (HasDevelopment env, HasPlanmillCfg env, HasLogLevel env)
+    => env
     -> Connection                              -- ^ Postgres connection
-    -> PM.Cfg                                  -- ^ Planmill config
     -> Bool                                    -- ^ whether to ask cache
     -> PM.GenPlanMillT BinaryFromJSON Stack a  -- ^ Action
     -> IO a
-runCachedPlanmillT development conn cfg askCache pm =
-    evalHttpT $ runStderrLoggingT $ filterLogger logPredicate $ flip runReaderT cfg $ do
+runCachedPlanmillT env conn askCache pm =
+    evalHttpT $ runFutuhoursLoggingT env $ flip runReaderT cfg $ do
         g <- mkHashDRBG
         flip evalStateT mempty $ flip evalCRandTThrow g $ flip runReaderT cfg $ action
   where
-    logPredicate _ l = l >= LevelInfo
+    cfg = env ^. planmillCfg
+    dev = env ^. development == Development
 
     action :: InnerStack a
     action = PM.runGenPlanMillT evalPlanMill (lift . lift . lift) pm
@@ -91,8 +93,8 @@ runCachedPlanmillT development conn cfg askCache pm =
       where
         selectQuery :: Postgres.Query
         selectQuery
-            | development = "SELECT data FROM futuhours.cache WHERE path = ? and updated + interval '300 minutes' > current_timestamp;"
-            | otherwise   = "SELECT data FROM futuhours.cache WHERE path = ? and updated + interval '8 minutes' * (r + 1) > current_timestamp;"
+            | dev       = "SELECT data FROM futuhours.cache WHERE path = ? and updated + interval '300 minutes' > current_timestamp;"
+            | otherwise = "SELECT data FROM futuhours.cache WHERE path = ? and updated + interval '8 minutes' * (r + 1) > current_timestamp;"
 
 
         url' :: Text

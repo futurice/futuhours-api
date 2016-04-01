@@ -36,6 +36,8 @@ module Futurice.App.FutuHours.Types (
     PowerAbsence(..),
     -- * Precalculated endpoints
     EndpointTag(..),
+    -- * Flags
+    Development(..),
     -- * Random
     reverseLookup,
     ) where
@@ -78,6 +80,15 @@ camelTo = Aeson.camelTo2 '_'
 #else
 camelTo = Aeson.camelTo '_'
 #endif
+
+-------------------------------------------------------------------------------
+-- Development
+-------------------------------------------------------------------------------
+
+data Development
+    = Development
+    | Production
+    deriving (Eq, Show)
 
 -------------------------------------------------------------------------------
 -- UserId - deprecated
