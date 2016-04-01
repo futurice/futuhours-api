@@ -6,6 +6,7 @@
 {-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE StandaloneDeriving    #-}
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE UndecidableInstances  #-}
@@ -475,3 +476,5 @@ instance GCompare EndpointTag where
     gcompare EPowerAbsences    _                 = GLT
     gcompare _                 EPowerAbsences    = GGT
     gcompare EBalanceReport    EBalanceReport    = GEQ
+
+deriving instance Show (EndpointTag a)

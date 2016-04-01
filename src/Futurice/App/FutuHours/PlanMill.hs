@@ -10,7 +10,8 @@ import Futurice.Prelude
 import Prelude          ()
 
 import Control.Monad.Http         (HttpT, evalHttpT)
-import Control.Monad.Logger       (LoggingT, MonadLogger, logDebug, logWarn,
+import Control.Monad.Logger       (LogLevel (..), LoggingT, MonadLogger,
+                                   filterLogger, logDebug, logWarn,
                                    runStderrLoggingT)
 import Control.Monad.Reader       (ReaderT (..))
 import Control.Monad.State.Strict (MonadState, StateT, evalStateT, gets,
@@ -63,10 +64,12 @@ runCachedPlanmillT
     -> PM.GenPlanMillT BinaryFromJSON Stack a  -- ^ Action
     -> IO a
 runCachedPlanmillT development conn cfg askCache pm =
-    evalHttpT $ runStderrLoggingT $ flip runReaderT cfg $ do
+    evalHttpT $ runStderrLoggingT $ filterLogger logPredicate $ flip runReaderT cfg $ do
         g <- mkHashDRBG
         flip evalStateT mempty $ flip evalCRandTThrow g $ flip runReaderT cfg $ action
   where
+    logPredicate _ l = l >= LevelInfo
+
     action :: InnerStack a
     action = PM.runGenPlanMillT evalPlanMill (lift . lift . lift) pm
 

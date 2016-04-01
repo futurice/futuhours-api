@@ -99,7 +99,14 @@ defaultMain = do
                 pure $ DMap.insert (defEndTag de) (Compose v) m
         in foldM f DMap.empty defaultableEndpoints
 
-    let ctx = Ctx cfgDevelopment pmCfg postgresPool planmillUserLookup precalcEndpoints
+    let ctx = Ctx
+          { ctxDevelopment = cfgDevelopment
+          , ctxPlanmillCfg = pmCfg
+          , ctxPostgresPool = postgresPool
+          , ctxPlanmillUserLookup = planmillUserLookup
+          , ctxPrecalcEndpoints = precalcEndpoints
+          , ctxLogLevel = cfgLogLevel
+          }
 
     -- Cron
     cron <- newCron ()

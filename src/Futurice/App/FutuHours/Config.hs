@@ -8,8 +8,9 @@ module Futurice.App.FutuHours.Config (
 import Futurice.Prelude
 import Prelude          ()
 
-import Data.ByteString    (ByteString)
-import System.Environment (lookupEnv)
+import Control.Monad.Logger (LogLevel (..))
+import Data.ByteString      (ByteString)
+import System.Environment   (lookupEnv)
 
 import Database.PostgreSQL.Simple     (ConnectInfo (..))
 import Database.PostgreSQL.Simple.URL (parseDatabaseUrl)
@@ -35,6 +36,7 @@ data Config = Config
     , cfgFumList           :: !FUM.ListName
     , cfgPort              :: !Int
     , cfgDevelopment       :: !Bool
+    , cfgLogLevel          :: !LogLevel
       -- ^ Port to listen from, default is 'defaultPort'.
     }
     deriving (Show)
@@ -50,6 +52,7 @@ getConfig =
            <*> parseEnvVar "FUM_LISTNAME"
            <*> parseEnvVarWithDefault "PORT" defaultPort
            <*> parseEnvVarWithDefault "DEVELOPMENT" False
+           <*> parseEnvVarWithDefault "LOGLEVEL" LevelInfo
 
 getConnectInfo :: IO ConnectInfo
 getConnectInfo = f
@@ -125,3 +128,10 @@ instance FromEnvVar Bool where
     fromEnvVar "1" = Just True
     fromEnvVar "0" = Just False
     fromEnvVar _   = Nothing
+
+instance FromEnvVar LogLevel where
+    fromEnvVar "DEBUG" = Just LevelDebug
+    fromEnvVar "INFO"  = Just LevelInfo
+    fromEnvVar "WARN"  = Just LevelWarn
+    fromEnvVar "ERROR" = Just LevelError
+    fromEnvVar _       = Nothing
