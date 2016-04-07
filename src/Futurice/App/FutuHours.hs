@@ -12,17 +12,18 @@ module Futurice.App.FutuHours (defaultMain) where
 import Futurice.Prelude
 import Prelude          ()
 
-import Control.Concurrent.STM      (atomically, newTVar)
+import Control.Concurrent.Async    (async)
+import Control.Concurrent.STM      (newTVarIO)
 import Control.Monad               (foldM, forM_)
 import Data.Functor.Compose        (Compose (..))
 import Data.Pool                   (createPool, withResource)
+import Generics.SOP                (I (..), NP (..))
 import Network.Wai
 import Network.Wai.Middleware.Cors (simpleCors)
 import Servant
 import Servant.Cache.Class         (DynMapCache)
 import Servant.Futurice
 import System.IO                   (hPutStrLn, stderr)
-import Generics.SOP (NP(..), I(..))
 
 import Distribution.Server.Framework.Cron (CronJob (..), JobFrequency (..),
                                            addCronJob, newCron)
@@ -97,27 +98,31 @@ defaultMain = do
     planmillUserLookup <- withResource postgresPool $ \conn ->
         planMillUserIds ctx' conn cfgFumToken cfgFumBaseurl cfgFumList
 
-    precalcEndpoints <- atomically $
-        let f m (SDE de) = do
-                v <- newTVar Nothing
-                pure $ DMap.insert (defEndTag de) (Compose v) m
-        in foldM f DMap.empty defaultableEndpoints
-
-    let ctx = Ctx
+    -- Context without precalc endpoints
+    let ctx'' = Ctx
           { ctxDevelopment = cfgDevelopment
           , ctxPlanmillCfg = pmCfg
           , ctxPostgresPool = postgresPool
           , ctxPlanmillUserLookup = planmillUserLookup
-          , ctxPrecalcEndpoints = precalcEndpoints
+          , ctxPrecalcEndpoints = DMap.empty
           , ctxLogLevel = cfgLogLevel
           }
+
+    precalcEndpoints <-
+        let f m (SDE de) = do
+                a <- async (defEndDefaultParsedParam de >>= defEndAction de ctx'')
+                v <- newTVarIO a
+                pure $ DMap.insert (defEndTag de) (Compose v) m
+        in foldM f DMap.empty defaultableEndpoints
+
+    let ctx = ctx'' { ctxPrecalcEndpoints = precalcEndpoints }
 
     -- Cron
     cron <- newCron ()
     forM_ (zip defaultableEndpoints [1, 30, 120]) $ \(SDE de, d) -> do
-        addCronJob cron $ CronJob "some job" (TestJobFrequency $ 30*60) False $
+        addCronJob cron $ CronJob (show $ defEndTag de) (TestJobFrequency $ 30*60) False $
             cronEndpoint de ctx
-        addCronJob cron $ CronJob "first some job" (TestJobFrequency d) True $
+        addCronJob cron $ CronJob (show $ defEndTag de) (TestJobFrequency d) True $
             cronEndpoint de ctx
 
     -- Startup
