@@ -56,7 +56,7 @@ library:
     - regex-applicative-text
     - resource-pool
     - semigroups
-    - servant >=0.5 && <0.6
+    - servant >=0.6 && <0.7
     - servant-blaze
     - servant-cache
     - servant-cassava
