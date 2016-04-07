@@ -7,7 +7,7 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-futulogo.git
-    commit: 31b7d957374e71fe2f5e4f3835880bc88351f9e5
+    commit: 1a0dca9d992cbd26a64713d2916e6efc5d651fad
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-futurice-prelude.git
@@ -19,15 +19,15 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-planmill-client.git
-    commit: f732383f21b96aea0f6d8074f40b1e7fb1f6ca2c
+    commit: a3d0b1fb340d12d56045bbf8d21f34f5985fad5e
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-servant-cache.git
-    commit: bd59e8bf3bc57960742651944c496e586bfef1b3
+    commit: c2084ba82f4241cabe224ad6295ac3df26f4575a
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-servant-status.git
-    commit: 08289741f58916ec0adef6b49c4a35cf94ebb290
+    commit: d862ccbea3ead86384d3d3974b2e83a5fb4ac5d7
   extra-dep: true
 - location:
     git: https://github.com/phadej/generics-sop-lens.git
@@ -35,7 +35,7 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/phadej/servant-swagger-ui.git
-    commit: 5f484f10d2182f917b0c3c094daee5d6e54e8a4e
+    commit: 8b9cb0164879aab73ab32bdfeebf6eac39a6ad3b
   extra-dep: true
 extra-deps:
 - aeson-compat-0.3.1.0
@@ -56,13 +56,13 @@ extra-deps:
 - monadcryptorandom-0.7.0
 - recursion-schemes-4.1.2
 - regex-applicative-text-0.1.0.1
-- servant-0.5
-- servant-blaze-0.5
-- servant-cassava-0.5
-- servant-docs-0.5
-- servant-JuicyPixels-0.3.0.1
-- servant-lucid-0.5
-- servant-server-0.5
+- servant-0.6
+- servant-blaze-0.6
+- servant-cassava-0.6
+- servant-docs-0.6
+- servant-JuicyPixels-0.3.0.2
+- servant-lucid-0.6
+- servant-server-0.6
 - servant-swagger-1.0.3
 - strict-base-types-0.5.0
 - swagger2-2.0.2
