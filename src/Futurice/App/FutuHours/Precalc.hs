@@ -13,6 +13,7 @@ module Futurice.App.FutuHours.Precalc where
 import Futurice.Prelude
 import Prelude          ()
 
+import Control.Concurrent.Async   (async, wait)
 import Control.Concurrent.STM     (atomically, readTVar, writeTVar)
 import Control.Monad.Logger       (logInfo, logWarn)
 import Control.Monad.Trans.Class  (MonadTrans (..))
@@ -20,7 +21,7 @@ import Control.Monad.Trans.Except (ExceptT)
 import Data.Functor.Compose       (Compose (..))
 import Generics.SOP
 import Generics.SOP.Curry
-import Servant                    (ServantErr)
+import Servant                    (ServantErr, err500)
 
 import qualified Data.Dependent.Map as DMap
 import qualified Data.Text          as T
@@ -37,13 +38,16 @@ executeEndpoint Ctx { ctxPrecalcEndpoints = m } e a = case DMap.lookup e m of
     Nothing   -> pure ()
     Just tvar -> do
         x <- a
-        atomically $ writeTVar (getCompose tvar) (Just x)
+        x' <- async (pure x)
+        atomically $ writeTVar (getCompose tvar) x'
 
 lookupEndpoint :: Ctx -> EndpointTag a -> IO (Maybe a)
 lookupEndpoint Ctx { ctxPrecalcEndpoints = m } e =
     case DMap.lookup e m of
         Nothing   -> pure Nothing
-        Just tvar -> atomically $ readTVar $ getCompose tvar
+        Just tvar -> do
+            a <- atomically $ readTVar $ getCompose tvar
+            Just <$> wait a
 
 data DefaultableEndpoint (xs :: [*]) (p :: *) (r :: *) = DefaultableEndpoint
     { defEndTag                :: EndpointTag r
@@ -71,9 +75,7 @@ servantEndpoint de ctx = hCurry endpoint
                 -- Shouldn't happen
                 Nothing -> do
                     $(logWarn) $ "non-cached endpoint: " <> (T.pack $ show $ defEndTag de)
-                    liftIO $ do
-                        p <- defEndDefaultParsedParam de
-                        defEndAction de ctx p
+                    throwM $ err500
                 Just r  -> do
                     $(logInfo) $ "cached endpoint: " <> (T.pack $ show $ defEndTag de)
                     return r

@@ -33,6 +33,7 @@ library
     , aeson                 >=0.8   && <0.12
     , aeson-compat          >=0.3.1 && <0.4
     , aeson-extra           >=0.3.1 && <0.4
+    , async >=2.0.2 && <2.2
     , base-compat
     , binary
     , binary-tagged

@@ -9,11 +9,14 @@ module Distribution.Server.Framework.Cron (
 import Control.Concurrent
 import Control.Exception
 import Control.Monad
-import qualified Data.Map as Map
-import Data.Map (Map)
+import Control.Monad.Logger      (logErrorN, logInfoN, runStderrLoggingT)
 import Data.List
+import Data.Map                  (Map)
 import Data.Time
 import Data.Time.Calendar.Easter
+
+import qualified Data.Map  as Map
+import qualified Data.Text as T
 
 newtype Cron = Cron (MVar CronState)
 
@@ -83,7 +86,7 @@ nextJobTime now WeeklyJobFrequency = now {
                                         utctDay     = sundayAfter (utctDay now),
                                         utctDayTime = 0
                                      }
-nextJobTime now (TestJobFrequency sec) = addUTCTime sec now 
+nextJobTime now (TestJobFrequency sec) = addUTCTime sec now
 
 disarmTimer :: CronState -> IO ()
 disarmTimer CronState{timerThread} =
@@ -112,15 +115,15 @@ cronRunner verbosity wait stateVar =
 
 runSingleJob :: Verbosity -> CronJob -> IO ()
 runSingleJob verbosity job = do
-    -- loginfo verbosity starting
+    loginfo verbosity starting
     logTiming verbosity finished (cronJobAction job)
       `catch` failed
   where
-    -- starting = "cron: running job '"  ++ cronJobName job ++ "'"
+    starting = "cron: running job '"  ++ cronJobName job ++ "'"
     finished = "cron: finished job '" ++ cronJobName job ++ "'"
 
     failed :: SomeException -> IO ()
-    failed e = lognotice verbosity $ 
+    failed e = lognotice verbosity $
                  "cron: exception in job '" ++ cronJobName job
                   ++ "': " ++ show e
 
@@ -160,10 +163,10 @@ threadDelayUntil target = do
 type Verbosity = ()
 
 lognotice :: Verbosity -> String -> IO ()
-lognotice () _ = return ()
+lognotice () = runStderrLoggingT . logErrorN . T.pack
 
---loginfo :: Verbosity -> String -> IO ()
---loginfo () _ = return ()
+loginfo :: Verbosity -> String -> IO ()
+loginfo () = runStderrLoggingT . logInfoN . T.pack
 
 logTiming :: Verbosity -> String -> IO a -> IO a
 logTiming () _ = id

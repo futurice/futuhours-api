@@ -9,8 +9,9 @@ module Futurice.App.FutuHours.PlanMill where
 import Futurice.Prelude
 import Prelude          ()
 
+import Control.Monad.Catch        (handle)
 import Control.Monad.Http         (HttpT, evalHttpT)
-import Control.Monad.Logger       (LoggingT, MonadLogger, logDebug, logWarn,
+import Control.Monad.Logger       (LoggingT, MonadLogger, logDebug, logError, logWarn,
                                    runStderrLoggingT)
 import Control.Monad.Reader       (ReaderT (..))
 import Control.Monad.State.Strict (MonadState, StateT, evalStateT, gets,
@@ -115,10 +116,15 @@ runCachedPlanmillT env conn askCache pm =
             x <- PM.evalPlanMill req
             -- Store in postgres
             let bs = taggedEncode x
-            liftIO $ Postgres.withTransaction conn $ do
+            handle omitSqlError $ liftIO $ Postgres.withTransaction conn $ do
                 void $ Postgres.execute conn "DELETE FROM futuhours.cache WHERE path = ?" (Only url)
                 void $ Postgres.execute conn "INSERT INTO futuhours.cache (path, data) VALUES (?, ?)" (url, Postgres.Binary bs)
             pure x
+
+        omitSqlError :: MonadLogger m => Postgres.SqlError -> m ()
+        omitSqlError err = do
+            $(logError) $ T.pack $ show err
+            return ()
 
 -- | Extract cache value from single db query result
 extract

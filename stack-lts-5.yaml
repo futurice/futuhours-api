@@ -11,7 +11,7 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-futurice-prelude.git
-    commit: bb7149e36a3b8189c1c7dba1d793b0dce94555f3
+    commit: 336b8921f9a733301b4f2d1669e04174df27d5fc
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-monad-http.git
@@ -19,7 +19,7 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-planmill-client.git
-    commit: a3d0b1fb340d12d56045bbf8d21f34f5985fad5e
+    commit: f2950bf767d3caf9bcd547c56d1500380e417a8c
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-servant-cache.git
@@ -41,10 +41,10 @@ extra-deps:
 - ansi-pretty-0.1.2.0
 - control-monad-omega-0.3.1
 - servant-0.6
-- servant-JuicyPixels-0.3.0.2
 - servant-blaze-0.6
 - servant-cassava-0.6
 - servant-docs-0.6
+- servant-JuicyPixels-0.3.0.2
 - servant-lucid-0.6
 - servant-server-0.6
 - servant-swagger-1.0.3
