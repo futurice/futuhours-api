@@ -41,15 +41,15 @@ extra-deps:
 - aeson-compat-0.3.2.0
 - aeson-extra-0.3.1.1
 - ansi-pretty-0.1.2.0
-- base-compat-0.9.0
-- base-orphans-0.5.3
+- base-compat-0.9.1
+- base-orphans-0.5.4
 - base-prelude-0.1.21
-- bifunctors-5.2.1
+- bifunctors-5.2
 - binary-orphans-0.1.4.0
 - binary-tagged-0.1.3.1
 - cassava-0.4.5.0
 - composition-extra-2.0.0
-- conduit-extra-1.1.11
+- conduit-extra-1.1.13.1
 - control-monad-omega-0.3.1
 - dependent-map-0.2.1.0
 - dependent-sum-0.3.2.1
@@ -66,6 +66,7 @@ extra-deps:
 - JuicyPixels-3.2.7
 - lattices-1.5.0
 - lens-4.13
+- linear-1.20.4
 - monad-time-0.1
 - monadcryptorandom-0.7.0
 - MonadRandom-0.4.2.2
@@ -95,7 +96,7 @@ extra-deps:
 - time-locale-compat-0.1.1.1
 - time-parsers-0.1.0.0
 - transformers-0.4.3.0
-- transformers-compat-0.5.1.4
+- transformers-compat-0.4.0.4
 - tz-0.1.0.1
 - tzdata-0.1.20150810.0
 - universe-base-1.0.2.1
@@ -106,7 +107,7 @@ extra-deps:
 - vector-binary-instances-0.2.3.1
 - vector-instances-3.3.1
 - wai-cors-0.2.4
-- wai-extra-3.0.14.3
+- wai-extra-3.0.15
 flags:
   QuickCheck:
     base4point8: false

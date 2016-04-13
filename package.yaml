@@ -20,6 +20,7 @@ library:
     - aeson                 >=0.8   && <0.12
     - aeson-compat          >=0.3.1 && <0.4
     - aeson-extra           >=0.3.1 && <0.4
+    - ad
     - async >=2.0.2 && <2.2
     - base-compat
     - binary
@@ -42,6 +43,7 @@ library:
     - http-client-tls
     - lattices >=1.4.1
     - lens
+    - linear >=1.20.4
     - lucid
     - markdown
     - monad-http
@@ -54,6 +56,7 @@ library:
     - postgresql-simple-url
     - QuickCheck
     - quickcheck-instances
+    - reflection
     - regex-applicative-text
     - resource-pool
     - semigroups
