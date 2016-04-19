@@ -1,0 +1,34 @@
+default: dev
+envs:
+  dev:
+    PORT: "8081"
+    FUM_LISTNAME: employees
+    FUM_BASEURL:
+        secret: prod-fum-baseurl
+    FUM_TOKEN:
+        secret: prod-fum-token
+    POSTGRES_URL: postgres://$USER@localhost:5432/$USER
+    POSTGRES_PASS: ""
+    PLANMILL_BASEURL:
+        secret: prod-planmill-futu-basurl
+    PLANMILL_ADMIN:
+        secret: prod-planmill-futu-userid
+    PLANMILL_SIGNATURE:
+        secret: prod-planmill-futu-signature
+  prod-postgres:
+    PORT: "8081"
+    FUM_LISTNAME: employees
+    FUM_BASEURL:
+        secret: prod-fum-baseurl
+    FUM_TOKEN:
+        secret: prod-fum-token
+    POSTGRES_URL:
+        secret: prod-futuhours-postgres-url
+    POSTGRES_PASS:
+        secret: prod-futuhours-postgres-pass
+    PLANMILL_BASEURL:
+        secret: prod-planmill-futu-basurl
+    PLANMILL_ADMIN:
+        secret: prod-planmill-futu-userid
+    PLANMILL_SIGNATURE:
+        secret: prod-planmill-futu-signature
