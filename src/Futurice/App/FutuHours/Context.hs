@@ -1,15 +1,11 @@
 {-# LANGUAGE CPP                   #-}
+{-# LANGUAGE ConstraintKinds       #-}
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE TypeOperators         #-}
-#if __GLASGOW_HASKELL__ < 710
-{-# LANGUAGE OverlappingInstances #-}
-#define OVERLAPPING_
-#else
-#define OVERLAPPING_ {-# OVERLAPPING #-}
-#endif
 module Futurice.App.FutuHours.Context where
 
 import Futurice.Prelude
@@ -24,8 +20,7 @@ import Data.Dependent.Map         (DMap)
 import Data.Functor.Compose       (Compose)
 import Data.Pool                  (Pool)
 import Database.PostgreSQL.Simple (Connection)
-import Generics.SOP               (I (..), NP (..))
-import Generics.SOP.Lens          (headLens, tailLens, uni)
+import Futurice.Has               (Has (..))
 import PlanMill                   (Cfg (..))
 
 import Futurice.App.FutuHours.Types
@@ -48,27 +43,22 @@ runFutuhoursLoggingT env l =
   where
     p _ level = level >= (env ^. logLevel)
 
-class HasDevelopment a where development :: Lens' a Development
-class HasPlanmillCfg a where planmillCfg :: Lens' a Cfg
-class HasLogLevel a where logLevel :: Lens' a LogLevel
+type HasDevelopment r = Has r Development
+type HasPlanmillCfg r = Has r Cfg
+type HasLogLevel    r = Has r LogLevel
 
-instance HasDevelopment Ctx where
-    development = lens ctxDevelopment $ \c x -> c { ctxDevelopment = x }
-instance HasPlanmillCfg Ctx where
-    planmillCfg = lens ctxPlanmillCfg $ \c x -> c { ctxPlanmillCfg = x }
-instance HasLogLevel Ctx where
-    logLevel = lens ctxLogLevel $ \c x -> c { ctxLogLevel = x }
+development :: HasDevelopment r => Lens' r Development
+development = field
 
-class IsElem a xs where
-    value :: Lens' (NP I xs) a
-instance OVERLAPPING_ IsElem a (a ': xs) where
-    value = headLens . uni
-instance IsElem a xs => IsElem a (b ': xs) where
-    value = tailLens . value
+planmillCfg :: HasPlanmillCfg r => Lens' r Cfg
+planmillCfg = field
 
-instance IsElem Development xs => HasDevelopment (NP I xs) where
-    development = value
-instance IsElem Cfg xs => HasPlanmillCfg (NP I xs) where
-    planmillCfg = value
-instance IsElem LogLevel xs => HasLogLevel (NP I xs) where
-    logLevel = value
+logLevel :: HasLogLevel r => Lens' r LogLevel
+logLevel = field
+
+instance Has Ctx Development where
+    field = lens ctxDevelopment $ \c x -> c { ctxDevelopment = x }
+instance Has Ctx Cfg where
+    field = lens ctxPlanmillCfg $ \c x -> c { ctxPlanmillCfg = x }
+instance Has Ctx LogLevel where
+    field = lens ctxLogLevel $ \c x -> c { ctxLogLevel = x }

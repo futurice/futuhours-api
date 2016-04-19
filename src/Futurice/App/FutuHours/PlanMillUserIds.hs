@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings, FlexibleContexts #-}
 -- | *TODO:* extract into common library
 module Futurice.App.FutuHours.PlanMillUserIds (planMillUserIds) where
 
@@ -32,7 +32,7 @@ planMillUserIds
     -> IO PlanmillUserLookupTable
 planMillUserIds env conn authToken baseUrl listName = do
     manager <- newManager tlsManagerSettings
-    planmillUsers <- runCachedPlanmillT env conn  True $ do
+    planmillUsers <- runHaxl env conn $ do
         us <- PM.planmillAction PM.users
         traverse (\u -> (,) <$> pure u <*> PM.enumerationValue (PM.uPassive u) "-") us
     fumUsers <- FUM.fetchList manager authToken baseUrl listName

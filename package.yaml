@@ -7,7 +7,7 @@ maintainer: Oleg Grenrus <oleg.grenrus@iki.fi>
 license: BSD3
 github: futurice/futuhours-api
 category: Web
-tested-with: GHC==7.8.4, GHC==7.10.2
+tested-with: GHC==7.8.4, GHC==7.10.3
 extra-source-files:
 - README.md
 
@@ -32,15 +32,21 @@ library:
     - dependent-map >=0.2.1.0 && <0.3
     - dependent-sum
     - either
+    - ekg
+    - ekg-core
     - exceptions
     - fum-client
     - futulogo
-    - futurice-prelude >=0.1.3.0
+    - futurice-prelude >=0.1.9.0
     - generics-sop >=0.2.1.0 && <0.3
     - generics-sop-lens >=0.1.0.0 && <0.2
     - hashable
+    - haxl                  >=0.3   && <0.4
+    - haxl-fxtra
+    - haxl-typed
     - http-client
     - http-client-tls
+    - intervals
     - lattices >=1.4.1
     - lens
     - linear >=1.20.4
@@ -48,6 +54,7 @@ library:
     - markdown
     - monad-http
     - monad-logger
+    - MonadRandom
     - mtl
     - operational
     - parsec
@@ -80,6 +87,7 @@ library:
     - unordered-containers
     - vector
     - wai
+    - wai-middleware-metrics
     - wai-cors
     - warp
 

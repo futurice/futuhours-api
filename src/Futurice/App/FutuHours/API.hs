@@ -20,8 +20,9 @@ import Futurice.App.FutuHours.Orphans ()
 import Futurice.App.FutuHours.Types
 
 type LegacyFutuhoursAPI =
-    "timereports" :> Capture "fum-id" FUMUsername :> Get '[JSON] (Vector Timereport)
-    :<|> "projects" :> Capture "userid" UserId :> Get '[JSON] (Vector Project)
+    --"timereports" :> Capture "fum-id" FUMUsername :> Get '[JSON] (Vector Timereport)
+    -- :<|> 
+    "projects" :> Capture "userid" UserId :> Get '[JSON] (Vector Project)
     :<|> "holidays" :> Get '[JSON] (Envelope ()) -- TODO
     :<|> "users" :> Header "Remote-User" Text :> Get '[JSON] (Envelope User)
     :<|> "hours" :> Header "Remote-User" Text :> QueryParam "day__lte" Day :> QueryParam "day__gte" Day :> Get '[JSON] (Envelope Hour)
