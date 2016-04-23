@@ -34,6 +34,7 @@ module Futurice.App.FutuHours.Endpoints (
 import Futurice.Prelude
 import Prelude          ()
 
+import Control.Concurrent.STM           (readTVarIO)
 import Control.Monad.Trans.Except       (ExceptT)
 import Data.Aeson.Extra                 (M (..))
 import Data.BinaryFromJSON              (BinaryFromJSON)
@@ -129,9 +130,10 @@ balanceReportEndpoint = DefaultableEndpoint
     balanceReport :: Ctx -> () -> IO BalanceReport
     balanceReport ctx () = do
         interval <- getInterval
+        ids <- HM.toList . fmap (view PM.identifier) <$> readTVarIO (ctxPlanmillUserLookup ctx)
         executeCachedAdminPlanmill ctx p $
             BalanceReport . V.fromList <$>
-                traverse (getBalance interval) (HM.toList (ctxPlanmillUserLookup ctx))
+                traverse (getBalance interval) ids
       where
         p = Proxy :: Proxy '[ PM.TimeBalance, PM.User, PM.Team, PM.Timereports, PM.UserCapacities, PM.Meta ]
 
@@ -212,11 +214,12 @@ getMissingHoursReport
     => Ctx
     -> Day -> Day -> Maybe FUMUsernamesParam
     -> m MissingHoursReport
-getMissingHoursReport ctx a b usernames =
+getMissingHoursReport ctx a b usernames = do
+    userLookup <- liftIO $ readTVarIO (ctxPlanmillUserLookup ctx)
     case PM.mkInterval a b of
         Nothing -> throwError err400
         Just interval -> executeCachedAdminPlanmill ctx p $
-            missingHours (ctxPlanmillUserLookup ctx) interval usernames'
+            missingHours userLookup interval usernames'
   where
     p = Proxy :: Proxy
         '[PM.UserCapacities, PM.Timereports, PM.User, PM.Team, PM.Meta]
@@ -246,14 +249,16 @@ missingHoursListEndpoint = DefaultableEndpoint
     }
   where
     missingHoursList :: Ctx -> (PM.Interval Day, [FUMUsername]) -> IO [MissingHour]
-    missingHoursList ctx (interval, usernames) = executeCachedAdminPlanmill ctx p $ do
-        r <- missingHours (ctxPlanmillUserLookup ctx) interval usernames
-        pure
-            . concatMap (f . snd)
-            . sortBy (comparing fst)
-            . HM.toList
-            . unMissingHoursReport
-            $ r
+    missingHoursList ctx (interval, usernames) = do
+        pmUsers <- readTVarIO (ctxPlanmillUserLookup ctx)
+        executeCachedAdminPlanmill ctx p $ do
+            r <- missingHours pmUsers interval usernames
+            pure
+                . concatMap (f . snd)
+                . sortBy (comparing fst)
+                . HM.toList
+                . unMissingHoursReport
+                $ r
       where
         p = Proxy :: Proxy
             '[PM.UserCapacities, PM.Timereports, PM.User, PM.Team, PM.Meta]
@@ -280,19 +285,19 @@ powerUsersEndpoint = DefaultableEndpoint
     }
   where
     powerUsers :: Ctx -> () -> IO (Vector PowerUser)
-    powerUsers ctx () = executeCachedAdminPlanmill ctx p $ traverse powerUser pmUsers
+    powerUsers ctx () = do
+        pmUsers <- V.fromList . HM.toList <$> readTVarIO (ctxPlanmillUserLookup ctx)
+        executeCachedAdminPlanmill ctx p $ traverse powerUser pmUsers
       where
         p = Proxy :: Proxy '[PM.User, PM.Team, PM.Meta]
-        pmUsers = V.fromList $ HM.toList $ ctxPlanmillUserLookup ctx
 
         powerUser
             :: ( Applicative n, PM.MonadPlanMill n
                , All (PM.MonadPlanMillC n) '[PM.User, PM.Team, PM.Meta]
                , ForallSymbols (PM.MonadPlanMillC n) PM.EnumDesc
                )
-            => (FUMUsername, PM.UserId) -> n PowerUser
-        powerUser (fumLogin, uid) = do
-            u <- PM.planmillAction $ PM.user uid
+            => (FUMUsername, PM.User) -> n PowerUser
+        powerUser (fumLogin, u) = do
             t <- traverse (PM.planmillAction . PM.team) (PM.uTeam u)
             a <- PM.enumerationValue (PM.uPassive u) "-"
             return $ PowerUser
@@ -326,7 +331,9 @@ powerAbsencesEndpoint = DefaultableEndpoint
   where
     powerAbsences
         :: Ctx -> PM.Interval Day -> IO (Vector PowerAbsence)
-    powerAbsences ctx interval = executeCachedAdminPlanmill ctx p getPowerAbsences'
+    powerAbsences ctx interval = do
+        idsLookup <- fmap (view PM.identifier) <$> readTVarIO (ctxPlanmillUserLookup ctx)
+        executeCachedAdminPlanmill ctx p (getPowerAbsences' idsLookup)
       where
         p = Proxy :: Proxy '[PM.Absences, PM.UserCapacities]
 
@@ -335,27 +342,31 @@ powerAbsencesEndpoint = DefaultableEndpoint
                , PM.MonadPlanMillC n PM.Absences
                , PM.MonadPlanMillC n PM.UserCapacities
                )
-            => n (Vector PowerAbsence)
-        getPowerAbsences' = do
+            => HM.HashMap FUMUsername PM.UserId
+            -> n (Vector PowerAbsence)
+        getPowerAbsences' idsLookup = do
             absences <- PM.planmillAction (PM.absencesFromInterval (toResultInterval interval))
-            traverse toPowerAbsence' absences
+            traverse (toPowerAbsence' idsLookup) absences
 
         toPowerAbsence'
             :: ( Applicative n, PM.MonadPlanMill n
                , PM.MonadPlanMillC n PM.UserCapacities
                )
-            => PM.Absence -> n PowerAbsence
-        toPowerAbsence' ab = do
+            => HM.HashMap FUMUsername PM.UserId
+            -> PM.Absence -> n PowerAbsence
+        toPowerAbsence' idsLookup ab =
             case PM.mkInterval (PM.absenceStart ab) (PM.absenceFinish ab) of
                 Just interval' -> do
                     uc <- PM.planmillAction $ PM.userCapacity interval' (PM.absencePerson ab)
-                    return $ toPowerAbsence ab uc
+                    return $ toPowerAbsence idsLookup ab uc
                 Nothing ->
-                    return $ toPowerAbsence ab mempty
+                    return $ toPowerAbsence idsLookup ab mempty
 
-        toPowerAbsence :: PM.Absence -> PM.UserCapacities -> PowerAbsence
-        toPowerAbsence ab uc = PowerAbsence
-            { powerAbsenceUsername     = reverseLookup (PM.absencePerson ab) (ctxPlanmillUserLookup ctx)
+        toPowerAbsence
+            :: HM.HashMap FUMUsername PM.UserId
+            -> PM.Absence -> PM.UserCapacities -> PowerAbsence
+        toPowerAbsence idsLookup ab uc = PowerAbsence
+            { powerAbsenceUsername     = reverseLookup (PM.absencePerson ab) idsLookup
             , powerAbsenceStart        = PM.absenceStart ab
             , powerAbsenceEnd          = PM.absenceFinish ab
             , powerAbsencePlanmillId   = ab ^. PM.identifier
@@ -377,8 +388,7 @@ getPowerAbsences
 getPowerAbsences = servantEndpoint powerAbsencesEndpoint
 
 toResultInterval :: PM.Interval Day -> PM.ResultInterval
-toResultInterval i = fromJust $ flip PM.elimInterval i $ \a b ->
-    PM.mkResultInterval PM.IntervalStart (UTCTime a 0) (UTCTime b 0)
+toResultInterval = PM.ResultInterval PM.IntervalStart . PM.intervalDayToIntervalUTC
 
 -------------------------------------------------------------------------------
 -- Helpers
@@ -386,7 +396,8 @@ toResultInterval i = fromJust $ flip PM.elimInterval i $ \a b ->
 
 withPlanmillCfg :: (PM.Cfg -> IO a) -> Ctx -> FUMUsername -> ExceptT ServantErr IO a
 withPlanmillCfg action ctx username =do
-    planMillId <- maybe (throwError err404) pure $ HM.lookup username (ctxPlanmillUserLookup ctx)
+    planmillLookup <- liftIO $ readTVarIO  (ctxPlanmillUserLookup ctx)
+    planMillId <- maybe (throwError err404) (pure . view PM.identifier) $ HM.lookup username planmillLookup
     apiKey     <- maybe (throwError err403) pure =<< getPlanmillApiKey' ctx username
     let cfg = (ctxPlanmillCfg ctx) { PM.cfgUserId = planMillId, PM.cfgApiKey = apiKey }
     liftIO $ action cfg
@@ -399,9 +410,10 @@ withLegacyPlanmill
     -> Maybe Text
     -> m a
 withLegacyPlanmill p action ctx httpRemoteUser = do
+    planmillLookup <- liftIO $ readTVarIO  (ctxPlanmillUserLookup ctx)
     let mPlanMillId = do
             fumUserName <- FUMUsername <$> httpRemoteUser
-            HM.lookup fumUserName (ctxPlanmillUserLookup ctx)
+            view PM.identifier <$> HM.lookup fumUserName planmillLookup
     planMillId <- maybe (throwError err404) return mPlanMillId
     executeUncachedAdminPlanmill ctx p (action planMillId)
 

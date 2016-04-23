@@ -35,7 +35,7 @@ data Ctx = Ctx
     { ctxDevelopment        :: !Development
     , ctxPlanmillCfg        :: !Cfg
     , ctxPostgresPool       :: !(Pool Connection)
-    , ctxPlanmillUserLookup :: !PlanmillUserIdLookupTable -- ^ *TODO:* refresh this from time to time
+    , ctxPlanmillUserLookup :: !(TVar PlanmillUserLookupTable)
     , ctxPrecalcEndpoints   :: !(DMap EndpointTag (Compose TVar Async))
     , ctxLogLevel           :: !LogLevel
     }
