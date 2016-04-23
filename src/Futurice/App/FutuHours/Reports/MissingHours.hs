@@ -85,7 +85,7 @@ missingHours
         , PM.MonadPlanMillC m PM.Meta
         , ForallSymbols (PM.MonadPlanMillC m) PM.EnumDesc
         )
-    => PlanmillUserIdLookupTable
+    => PlanmillUserLookupTable
     -> PM.Interval Day
     -> f FUMUsername
     -> m MissingHoursReport
@@ -101,7 +101,7 @@ missingHours pmUsers interval usernames
         us -> us
 
     g :: FUMUsername -> Maybe (FUMUsername, PM.UserId)
-    g n = (,) n <$> HM.lookup n pmUsers
+    g n = (,) n . (^.PM.identifier) <$> HM.lookup n pmUsers
 
 isPositive :: (Num a, Ord a) => a -> Bool
 isPositive = (>0)

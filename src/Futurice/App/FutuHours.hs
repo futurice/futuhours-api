@@ -13,7 +13,7 @@ import Futurice.Prelude
 import Prelude          ()
 
 import Control.Concurrent.Async    (async)
-import Control.Concurrent.STM      (newTVarIO)
+import Control.Concurrent.STM      (atomically, newTVarIO, writeTVar)
 import Control.Monad               (foldM, forM_)
 import Data.Functor.Compose        (Compose (..))
 import Data.Pool                   (createPool, withResource)
@@ -97,15 +97,16 @@ defaultMain = do
     let ctx' = I cfgDevelopment :* I pmCfg :* I cfgLogLevel :* Nil
     planmillUserLookup <- withResource postgresPool $ \conn ->
         planMillUserIds ctx' conn cfgFumToken cfgFumBaseurl cfgFumList
+    planmillUserLookupTVar <- newTVarIO planmillUserLookup
 
     -- Context without precalc endpoints
     let ctx'' = Ctx
-          { ctxDevelopment = cfgDevelopment
-          , ctxPlanmillCfg = pmCfg
-          , ctxPostgresPool = postgresPool
-          , ctxPlanmillUserLookup = planmillUserLookup
-          , ctxPrecalcEndpoints = DMap.empty
-          , ctxLogLevel = cfgLogLevel
+          { ctxDevelopment        = cfgDevelopment
+          , ctxPlanmillCfg        = pmCfg
+          , ctxPostgresPool       = postgresPool
+          , ctxPlanmillUserLookup = planmillUserLookupTVar
+          , ctxPrecalcEndpoints   = DMap.empty
+          , ctxLogLevel           = cfgLogLevel
           }
 
     precalcEndpoints <-
@@ -119,11 +120,20 @@ defaultMain = do
 
     -- Cron
     cron <- newCron ()
+
+    -- Cron: planmill users
+    addCronJob cron $ CronJob "Planmill Users" (TestJobFrequency $ 10 * 60) True $ do
+        planmillUserLookup' <- withResource postgresPool $ \conn ->
+            planMillUserIds ctx' conn cfgFumToken cfgFumBaseurl cfgFumList
+        atomically $ writeTVar planmillUserLookupTVar planmillUserLookup'
+
+    -- Cron: preprocessed endpoints
     forM_ (zip defaultableEndpoints [1, 30, 120]) $ \(SDE de, d) -> do
         addCronJob cron $ CronJob (show $ defEndTag de) (TestJobFrequency $ 30*60) False $
             cronEndpoint de ctx
         addCronJob cron $ CronJob (show $ defEndTag de) (TestJobFrequency d) True $
             cronEndpoint de ctx
+    
 
     -- Startup
     cache <- DynMap.newIO

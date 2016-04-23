@@ -29,7 +29,7 @@ planMillUserIds
     -> FUM.AuthToken
     -> FUM.BaseUrl
     -> FUM.ListName
-    -> IO PlanmillUserIdLookupTable
+    -> IO PlanmillUserLookupTable
 planMillUserIds env conn authToken baseUrl listName = do
     manager <- newManager tlsManagerSettings
     planmillUsers <- runCachedPlanmillT env conn  True $ do
@@ -38,7 +38,7 @@ planMillUserIds env conn authToken baseUrl listName = do
     fumUsers <- FUM.fetchList manager authToken baseUrl listName
     return $ process planmillUsers fumUsers
   where
-    process :: Vector (PM.User, Text) -> Vector FUM.User -> PlanmillUserIdLookupTable
+    process :: Vector (PM.User, Text) -> Vector FUM.User -> PlanmillUserLookupTable
     process planmillUsers
         = HM.fromList
         . mapMaybe (process' planmillUsers)
@@ -48,10 +48,10 @@ planMillUserIds env conn authToken baseUrl listName = do
     fumUserPredicate :: FUM.User -> Bool
     fumUserPredicate = (FUM.StatusActive ==) . view FUM.userStatus
 
-    process' :: Vector (PM.User, Text) -> FUM.User -> Maybe (FUMUsername, PM.UserId)
+    process' :: Vector (PM.User, Text) -> FUM.User -> Maybe (FUMUsername, PM.User)
     process' planmillUsers fumUser = case V.find p planmillUsers of
         Nothing    -> Nothing
-        Just pair  -> Just (FUMUsername (FUM._getUserName fumUserName), pair ^. _1 . PM.identifier)
+        Just pair  -> Just (FUMUsername (FUM._getUserName fumUserName), pair ^. _1)
       where
         fumUserName = fumUser ^. FUM.userName
         fumUserNameStr = fumUserName ^. FUM.getUserName . from packed
