@@ -14,7 +14,7 @@ module Futurice.App.FutuHours.Endpoints (
     Ctx(..),
     addPlanmillApiKey,
     getProjects,
-    getTimereports,
+    -- getTimereports,
     getBalances,
     balanceReportEndpoint,
     -- * Reports
@@ -38,7 +38,6 @@ import Control.Concurrent.STM           (readTVarIO)
 import Control.Monad.Trans.Except       (ExceptT)
 import Data.Aeson.Extra                 (M (..))
 import Data.BinaryFromJSON              (BinaryFromJSON)
-import Data.List                        (nub, sortBy)
 import Data.Maybe                       (fromJust)
 import Data.Monoid (Sum (..))
 import Data.Ord                         (comparing)
@@ -46,25 +45,26 @@ import Data.Pool                        (withResource)
 import Data.Time                        (UTCTime (..), addDays)
 import Data.Time.Fxtra                  (beginningOfPrevMonth,
                                          getCurrentDayInFinland)
-import Database.PostgreSQL.Simple.Fxtra (Only (..), execute, singleQuery)
+import Database.PostgreSQL.Simple.Fxtra (execute)
 import Generics.SOP                     (All, NP(..), I(..))
 import Servant                          (ServantErr)
 
-import Servant.Server (err400, err403, err404)
+import Servant.Server (err400, err404)
 
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Map            as Map
-import qualified Data.Text.Encoding  as TE
+--import qualified Data.Text.Encoding  as TE
 import qualified Data.Vector         as V
 
 import Futurice.App.FutuHours.Context
 import Futurice.App.FutuHours.PlanMill
+import Futurice.App.FutuHours.PlanMillCache
 import Futurice.App.FutuHours.Reports.MissingHours
 import Futurice.App.FutuHours.Types
 import Futurice.App.FutuHours.Precalc
 
 -- Planmill modules
-import           Control.Monad.PlanMill (ForallSymbols, MonadPlanMill (..))
+import           Control.Monad.PlanMill (ForallFSymbol, MonadPlanMill (..))
 import qualified PlanMill               as PM
 import qualified PlanMill.Test          as PM (evalPlanMillIO)
 
@@ -77,9 +77,10 @@ addPlanmillApiKey Ctx { ctxPostgresPool = pool } username apikey =
         print apikey
         print rows
 
+{-
 getPlanmillApiKey :: MonadIO m => Ctx -> FUMUsername -> m (Maybe PlanmillApiKey)
 getPlanmillApiKey  Ctx { ctxPostgresPool = pool } username =
-    liftIO $ withResource pool $ \conn -> do
+    liftIO $ withResource pool $ \conn ->
         fromOnly <$$> singleQuery conn "SELECT planmill_apikey FROM futuhours.apikeys WHERE fum_username = ? LIMIT 1" (Only username)
 
 getPlanmillApiKey' :: (MonadIO m, Functor m) => Ctx -> FUMUsername -> m (Maybe PM.ApiKey)
@@ -87,7 +88,7 @@ getPlanmillApiKey' ctx username = (fmap . fmap) f (getPlanmillApiKey ctx usernam
   where f (PlanmillApiKey apiKey) = PM.ApiKey (TE.encodeUtf8 apiKey)
 
 getTimereports :: Ctx  -> FUMUsername -> ExceptT ServantErr IO (V.Vector Timereport)
-getTimereports = withPlanmillCfg $ \cfg -> liftIO $ runPlanmillT cfg getTimereports'
+getTimereports = withPlanmillCfg $ \cfg -> liftIO $ runHaxl cfg getTimereports'
   where
     getTimereports' :: (MonadPlanMill m, MonadPlanMillC m PM.Timereports) => m (V.Vector Timereport)
     getTimereports' = do
@@ -95,6 +96,7 @@ getTimereports = withPlanmillCfg $ \cfg -> liftIO $ runPlanmillT cfg getTimerepo
         return $ fmap convert timereports
     convert :: PM.Timereport -> Timereport
     convert tr = Timereport (tr ^. PM.identifier) (PM.trComment tr)
+-}
 
 -- | Return projects for user
 --
@@ -294,7 +296,7 @@ powerUsersEndpoint = DefaultableEndpoint
         powerUser
             :: ( Applicative n, PM.MonadPlanMill n
                , All (PM.MonadPlanMillC n) '[PM.User, PM.Team, PM.Meta]
-               , ForallSymbols (PM.MonadPlanMillC n) PM.EnumDesc
+               , ForallFSymbol (PM.MonadPlanMillC n) PM.EnumDesc
                )
             => (FUMUsername, PM.User) -> n PowerUser
         powerUser (fumLogin, u) = do
@@ -305,7 +307,8 @@ powerUsersEndpoint = DefaultableEndpoint
                 , powerUserFirst    = PM.uFirstName u
                 , powerUserLast     = PM.uLastName u
                 , powerUserTeam     = maybe "Unknown Team" PM.tName t
-                , powerUserStart    = utctDay <$> PM.uHireDate u
+                , powerUserStart    = PM.uHireDate u
+                , powerUserEnd      = PM.uDepartDate u
                 , powerUserActive   = a
                 }
 
@@ -394,6 +397,7 @@ toResultInterval = PM.ResultInterval PM.IntervalStart . PM.intervalDayToInterval
 -- Helpers
 -------------------------------------------------------------------------------
 
+{-
 withPlanmillCfg :: (PM.Cfg -> IO a) -> Ctx -> FUMUsername -> ExceptT ServantErr IO a
 withPlanmillCfg action ctx username =do
     planmillLookup <- liftIO $ readTVarIO  (ctxPlanmillUserLookup ctx)
@@ -401,6 +405,7 @@ withPlanmillCfg action ctx username =do
     apiKey     <- maybe (throwError err403) pure =<< getPlanmillApiKey' ctx username
     let cfg = (ctxPlanmillCfg ctx) { PM.cfgUserId = planMillId, PM.cfgApiKey = apiKey }
     liftIO $ action cfg
+-}
 
 withLegacyPlanmill
     :: forall m a as. (MonadIO m, MonadError ServantErr m, All BinaryFromJSON as)
@@ -425,14 +430,14 @@ executeUncachedAdminPlanmill
     -> m a
 executeUncachedAdminPlanmill ctx _ action =
     liftIO $ withResource (ctxPostgresPool ctx) $ \conn ->
-        runCachedPlanmillT ctx conn False action
+        runHaxl ctx conn action
 
 executeCachedAdminPlanmill
-    :: forall m a as. (MonadIO m, All BinaryFromJSON as, ForallSymbols BinaryFromJSON PM.EnumDesc)
+    :: forall m a as. (MonadIO m, All BinaryFromJSON as, ForallFSymbol BinaryFromJSON PM.EnumDesc)
     => Ctx
     -> Proxy as
-    -> (forall n. (Applicative n, MonadPlanMill n, All (MonadPlanMillC n) as, ForallSymbols (MonadPlanMillC n) PM.EnumDesc) => n a)
+    -> (forall n. (Applicative n, MonadPlanMill n, All (MonadPlanMillC n) as, ForallFSymbol (MonadPlanMillC n) PM.EnumDesc, MonadPlanMillCached n) => n a)
     -> m a
 executeCachedAdminPlanmill ctx _ action =
     liftIO $ withResource (ctxPostgresPool ctx) $ \conn ->
-        runCachedPlanmillT ctx conn True action
+        runHaxl ctx conn action

@@ -1,10 +1,10 @@
-{-# LANGUAGE RankNTypes, FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE RankNTypes          #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Futurice.ExpFit (expfn, expfit) where
 
 import Linear
-import Numeric.AD
-import Data.Reflection (Reifies)
-import Numeric.AD.Internal.Reverse (Reverse, Tape)
+import Numeric.AD.Mode.Forward (AD, Forward, auto, jacobian')
 
 -- | Fit three points into @k * exp (a * t) + b@ function.
 --
@@ -17,7 +17,7 @@ import Numeric.AD.Internal.Reverse (Reverse, Tape)
 -- /Example:/
 --
 -- @
--- λ *Futurice.ExpFit > let kab = expfit (14, 15) (21, 3* 60) (180, 24 * 60)
+-- λ *Futurice.ExpFit > let kab = expfit (14, 15) (21, 3* 60) (180, 24 * 60) :: (Double, Double, Double)
 -- λ *Futurice.ExpFit > kab
 -- (-1918.6504389149056,-1.634461945864552e-2,1541.2250057697918)
 -- λ *Futurice.ExpFit > expfn kab 14
@@ -30,8 +30,9 @@ import Numeric.AD.Internal.Reverse (Reverse, Tape)
 -- 64.08449561243242
 -- -- @
 expfit
-    :: (Double, Double) -> (Double, Double) -> (Double, Double)
-    -> (Double, Double, Double)
+    :: forall a. (Floating a, Epsilon a)
+    => (a, a) -> (a, a) -> (a, a)
+    -> (a, a, a)
 expfit (x1, y1) (x2, y2) (x3, y3) = toTriple . convergedOrNth 1000 $
     findZeroV3
         (\(V3 k a b) -> V3
@@ -43,7 +44,7 @@ expfit (x1, y1) (x2, y2) (x3, y3) = toTriple . convergedOrNth 1000 $
     toTriple :: V3 a -> (a, a, a)
     toTriple (V3 a b c) = (a, b, c)
 
-    convergedOrNth :: Int -> [V3 Double] -> V3 Double
+    convergedOrNth :: Int -> [V3 a] -> V3 a
     convergedOrNth = go
       where
         go _ []                = return (0/0)
@@ -53,22 +54,24 @@ expfit (x1, y1) (x2, y2) (x3, y3) = toTriple . convergedOrNth 1000 $
             | nearZero (x - y) = y
             | otherwise        = go (n-1) xs
 
-expfn :: (Double, Double, Double) -> Double -> Double
+expfn :: Floating a => (a, a, a) -> a -> a
 expfn (k, a, b) t = k * exp (a * t) + b
 
 findZeroV3
-    :: (forall s. Reifies s Tape => V3 (Reverse s Double) -> V3 (Reverse s Double))
-    -> V3 Double    -- ^ Initial point
-    -> [V3 Double]
+    :: forall a. (Floating a, Epsilon a)
+    => (forall s. V3 (AD s (Forward a)) -> V3 (AD s (Forward a)))
+    -> V3 a    -- ^ Initial point
+    -> [V3 a]
 findZeroV3 f = iterate go where
   go x = xn where
     j = jacobian' f x
 
-    y :: V3 Double
+    y :: V3 a
     y = fmap fst j
 
-    y' :: M33 Double
+    y' :: M33 a
     y' = fmap snd j
 
+    xn :: V3 a
     xn | nearZero y  = x
        | otherwise   = x - inv33 y' !* y

@@ -24,6 +24,9 @@ import Servant
 import Servant.Cache.Class         (DynMapCache)
 import Servant.Futurice
 import System.IO                   (hPutStrLn, stderr)
+import System.Metrics              (registerGcMetrics, newStore)
+import System.Remote.Monitoring    (forkServerWith)
+import Network.Wai.Metrics         (registerWaiMetrics, metrics)
 
 import Distribution.Server.Framework.Cron (CronJob (..), JobFrequency (..),
                                            addCronJob, newCron)
@@ -55,7 +58,7 @@ server ctx = pure "Hello to futuhours api"
     :<|> (getPowerUsers ctx
         :<|> getPowerAbsences ctx
         )
-    :<|> getTimereports ctx
+    -- :<|> getTimereports ctx
     :<|> getProjects ctx
     :<|> pure (Envelope empty)
     :<|> getLegacyUsers ctx
@@ -80,6 +83,15 @@ defaultableEndpoints =
     , SDE missingHoursListEndpoint
     , SDE balanceReportEndpoint
     ]
+
+ekg :: Int -> IO Middleware
+ekg port = do
+    s <- newStore
+    registerGcMetrics s
+    wai <- registerWaiMetrics s
+    -- Server is unused
+    _ <- forkServerWith s "localhost" port
+    pure (metrics wai)
 
 defaultMain :: IO ()
 defaultMain = do
@@ -111,6 +123,7 @@ defaultMain = do
 
     precalcEndpoints <-
         let f m (SDE de) = do
+                hPutStrLn stderr $ "Initialising " ++ show (defEndTag de)
                 a <- async (defEndDefaultParsedParam de >>= defEndAction de ctx'')
                 v <- newTVarIO a
                 pure $ DMap.insert (defEndTag de) (Compose v) m
@@ -122,21 +135,22 @@ defaultMain = do
     cron <- newCron ()
 
     -- Cron: planmill users
-    addCronJob cron $ CronJob "Planmill Users" (TestJobFrequency $ 10 * 60) True $ do
+
+    addCronJob cron $ CronJob "Planmill Users" (TestJobFrequency $ 7 * 60) True $ do
         planmillUserLookup' <- withResource postgresPool $ \conn ->
             planMillUserIds ctx' conn cfgFumToken cfgFumBaseurl cfgFumList
         atomically $ writeTVar planmillUserLookupTVar planmillUserLookup'
 
     -- Cron: preprocessed endpoints
-    forM_ (zip defaultableEndpoints [1, 30, 120]) $ \(SDE de, d) -> do
-        addCronJob cron $ CronJob (show $ defEndTag de) (TestJobFrequency $ 30*60) False $
+    forM_ (zip defaultableEndpoints [13, 17, 19, 23]) $ \(SDE de, d) -> do
+        hPutStrLn stderr $ "Queueing cron " ++ show (defEndTag de)
+        addCronJob cron $ CronJob (show $ defEndTag de) (TestJobFrequency $ d * 60) True $
             cronEndpoint de ctx
-        addCronJob cron $ CronJob (show $ defEndTag de) (TestJobFrequency d) True $
-            cronEndpoint de ctx
-    
+
+    metricsMiddleware <- ekg cfgEkgPort
 
     -- Startup
     cache <- DynMap.newIO
-    let app' = app cache ctx
+    let app' = metricsMiddleware $ app cache ctx
     hPutStrLn stderr "Now I'll start the webservice"
     Warp.run cfgPort app'

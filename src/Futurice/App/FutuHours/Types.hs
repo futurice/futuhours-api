@@ -51,7 +51,6 @@ import Data.Aeson.Extra  (FromJSON (..), M, ToJSON (..), Value (..), object,
 import Data.Csv          (DefaultOrdered (..), FromRecord (..), ToField (..),
                           ToNamedRecord (..))
 import Data.GADT.Compare ((:~:) (..), GCompare (..), GEq (..), GOrdering (..))
-import Data.List         (sortBy)
 import Data.Swagger      (ToParamSchema, ToSchema (..))
 import Futurice.Generics (sopDeclareNamedSchema, sopHeaderOrder, sopParseJSON,
                           sopParseRecord, sopToJSON, sopToNamedRecord)
@@ -427,6 +426,7 @@ data PowerUser = PowerUser
     , powerUserLast     :: !Text
     , powerUserTeam     :: !Text
     , powerUserStart    :: !(Maybe Day)
+    , powerUserEnd      :: !(Maybe Day)
     , powerUserActive   :: !Text
     }
     deriving (Eq, Ord, Show, Typeable, Generic)

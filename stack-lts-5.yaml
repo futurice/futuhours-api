@@ -1,17 +1,29 @@
-resolver: lts-5.11
+resolver: lts-5.15
 packages:
 - '.'
+- location:
+    git: https://github.com/futurice/haskell-flowdock-rest.git
+    commit: 475a12ac78117fd3ca95f05911227771b927da24
+  extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-fum-client.git
     commit: 50dea8750e538eefdda563a13f6b8e7b53291087
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-futulogo.git
-    commit: 1a0dca9d992cbd26a64713d2916e6efc5d651fad
+    commit: 6f6e7f5933bf48646c4b18351e52772ccc517131
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-futurice-prelude.git
-    commit: 336b8921f9a733301b4f2d1669e04174df27d5fc
+    commit: 4ca1fba9c554a8a8782999d7bd361e870c3f62d2
+  extra-dep: true
+- location:
+    git: https://github.com/futurice/haskell-haxl-fxtra.git
+    commit: 87fb189cdf7e955fd42abda225606e8d5be6601d
+  extra-dep: true
+- location:
+    git: https://github.com/futurice/haskell-haxl-typed.git
+    commit: cd71b146ebecee041e13a7a3b7208d7e28468dbd
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-monad-http.git
@@ -19,7 +31,7 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-planmill-client.git
-    commit: 2e2b8bceb35aeb75d606dbe5bb32df1a6157b87c
+    commit: 3c06082730be950fb4c2ffb1c72d73eba0baf446
   extra-dep: true
 - location:
     git: https://github.com/futurice/haskell-servant-cache.git
@@ -38,13 +50,15 @@ packages:
     commit: 8b9cb0164879aab73ab32bdfeebf6eac39a6ad3b
   extra-dep: true
 extra-deps:
+- aeson-0.11.2.0
+- aeson-compat-0.3.3.0
 - ansi-pretty-0.1.2.0
 - control-monad-omega-0.3.1
+- monad-http-0.2.0.0
 - servant-0.6
 - servant-blaze-0.6
 - servant-cassava-0.6
 - servant-docs-0.6
-- servant-JuicyPixels-0.3.0.2
 - servant-lucid-0.6
 - servant-server-0.6
 - servant-swagger-1.0.3

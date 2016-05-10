@@ -40,6 +40,7 @@ data Config = Config
       -- ^ Port to listen from, default is 'defaultPort'.
     , cfgDevelopment       :: !Development
     , cfgLogLevel          :: !LogLevel
+    , cfgEkgPort           :: !Int
     }
     deriving (Show)
 
@@ -55,6 +56,7 @@ getConfig = Config
     <*> parseEnvVarWithDefault "PORT" defaultPort
     <*> parseEnvVarWithDefault "DEVELOPMENT" Production
     <*> parseEnvVarWithDefault "LOGLEVEL" LevelInfo
+    <*> parseEnvVarWithDefault "EKG_PORT" 8888
 
 getConnectInfo :: IO ConnectInfo
 getConnectInfo = f

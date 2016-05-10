@@ -9,7 +9,7 @@ import Futurice.Prelude
 import Prelude          ()
 
 import Data.Time
-import Data.Time.Zones (TZ, loadTZFromDB, timeZoneForUTCTime)
+import Data.Time.Zones (TZ, loadSystemTZ, timeZoneForUTCTime)
 import System.IO.Unsafe (unsafePerformIO)
 
 getCurrentDayInFinland :: MonadIO m => m Day
@@ -22,7 +22,8 @@ getCurrentDayInFinland = liftIO $ f <$> getCurrentTime
 
 -- | TODO: use template haskell
 tz :: TZ
-tz = unsafePerformIO $ loadTZFromDB "Europe/Helsinki"
+tz = unsafePerformIO $ loadSystemTZ "Europe/Helsinki"
+{-# NOINLINE tz #-}
 
 beginningOfPrevMonth :: Day -> Day
 beginningOfPrevMonth = fromGregorian' . f. toGregorian
