@@ -461,11 +461,11 @@ instance ToSchema PowerAbsence where declareNamedSchema = sopDeclareNamedSchema
 
 data EndpointTag a where
     EMissingHoursList :: EndpointTag [MissingHour]
-    -- ^ missing hours from beginning of the previous month till today
+    -- missing hours from beginning of the previous month till today
     EPowerUsers       :: EndpointTag (Vector PowerUser)
-    -- ^ Users in planmill with some additional information
+    -- Users in planmill with some additional information
     EPowerAbsences    :: EndpointTag (Vector PowerAbsence)
-    -- ^ Absences in next 365 days
+    -- Absences in next 365 days
     EBalanceReport    :: EndpointTag BalanceReport
     deriving (Typeable)
 
